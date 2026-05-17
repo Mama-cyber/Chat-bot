@@ -19,7 +19,8 @@
       const input = document.getElementById("message");
       const chat = document.getElementById("chat");
 
-      const response = await fetch("http://localhost:3000/chat", {
+      // CORRECTION : Utilisation d'un chemin relatif pour que Render comprenne la requête
+      const response = await fetch("/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
