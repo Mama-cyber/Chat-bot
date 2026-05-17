@@ -57,7 +57,7 @@ app.post("/chat", async (req, res) => {
         body: JSON.stringify({
           // MODIFICATION : On force l'usage de Gemini 2.5 Flash en version GRATUITE (:free)
           // Ce modèle dispose d'une fenêtre de contexte immense, parfaite pour vos documents.
-          model: "google/gemini-2.5-flash:free", 
+          model: "meta-llama/llama-3.3-70b-instruct:free", 
           messages: [
             {
               role: "user",
