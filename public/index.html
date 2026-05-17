@@ -3,9 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mon Chatbot Chaleureux</title>
+  <title>Mon Chatbot Chaleureux | Luxe Boutique</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ---- STYLE GÉNÉRAL & PALETTE DE COULEURS ---- */
+    :root {
+      --primary: #C8A882; /* Beige doré */
+      --secondary: #B8860B; /* Or vieux */
+      --accent: #D4AF37; /* Or pâle */
+      --dark: #4A2C2A; /* Marron foncé */
+      --light: #FDF6E3; /* Crème très clair */
+      --danger: #8B0000; /* Rouge bordeaux */
+      --text: #5D4037; /* Marron clair */
+      --success: #8FBC8F; /* Vert doux */
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -13,226 +27,215 @@
     }
 
     body {
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-      background-color: #faf6f0; /* Fond beige/crème très doux */
-      color: #3d342e; /* Texte marron foncé doux (moins agressif que le noir) */
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light);
+      color: var(--text);
       display: flex;
       flex-direction: column;
       height: 100vh;
+      background-image: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.8) 0%, rgba(253, 246, 227, 0.9) 100%);
     }
 
     /* ---- EN-TÊTE ---- */
     header {
-      background-color: #ffffff;
-      padding: 15px 20px;
+      background: linear-gradient(135deg, var(--dark), var(--primary));
+      padding: 1.2rem;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(213, 114, 59, 0.08);
-      border-bottom: 1px solid #f0e6db;
+      box-shadow: 0 4px 20px rgba(74, 44, 42, 0.2);
+      border-bottom: 1px solid rgba(200, 168, 130, 0.2);
     }
 
     header h1 {
-      font-size: 1.4rem;
-      color: #d54617; /* Orange Terracotta chaleureux */
-      font-weight: 600;
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: var(--accent) !important;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     /* ---- ZONE DE DISCUSSION (CHAT) ---- */
-    /* On remplace la balise <pre> par une div plus moderne pour gérer les bulles */
     #chat-container {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 2rem;
       max-width: 800px;
       width: 100%;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 1.2rem;
+      background-color: rgba(255, 255, 255, 0.7);
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(74, 44, 42, 0.05);
+      border: 1px solid rgba(200, 168, 130, 0.1);
     }
 
     /* Style de base d'un message */
     .message {
       max-width: 75%;
-      padding: 12px 16px;
-      border-radius: 18px;
+      padding: 1rem 1.3rem;
+      border-radius: 20px;
       font-size: 1rem;
-      line-height: 1.5;
+      line-height: 1.6;
       word-wrap: break-word;
-      animation: fadeIn 0.3s ease;
+      animation: fadeIn 0.4s ease;
+      box-shadow: 0 2px 8px rgba(74, 44, 42, 0.08);
     }
 
-    /* Bulle de l'utilisateur (à droite, tons orange cuivré doux) */
+    /* Bulle de l'utilisateur (à droite) */
     .user-message {
-      background-color: #e66b37;
-      color: #ffffff;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
       align-self: flex-end;
-      border-bottom-right-radius: 4px;
-      box-shadow: 0 2px 6px rgba(230, 107, 55, 0.2);
+      border-bottom-right-radius: 5px;
     }
 
-    /* Bulle du Bot (à gauche, tons crème/blanc et bordure ambre) */
+    /* Bulle du Bot (à gauche) */
     .bot-message {
-      background-color: #ffffff;
-      color: #3d342e;
+      background-color: white;
+      color: var(--text);
       align-self: flex-start;
-      border-bottom-left-radius: 4px;
-      border: 1px solid #ebdcd0;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(200, 168, 130, 0.3);
     }
 
-    /* Bulle d'erreur */
-    .error-message {
-      background-color: #fcece6;
-      color: #c84113;
-      align-self: center;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      border: 1px dashed #f5c0b0;
-    }
-
-    /* ---- BARRE DE SAISIE (EN BAS) ---- */
-    .input-container {
-      background-color: #ffffff;
-      border-top: 1px solid #f0e6db;
-      padding: 20px;
-    }
-
-    .input-wrapper {
-      max-width: 800px;
-      margin: 0 auto;
+    /* ---- BARRE DE SAISIE ---- */
+    #input-container {
+      padding: 1.5rem 2rem;
+      background-color: white;
+      border-top: 1px solid rgba(200, 168, 130, 0.2);
+      box-shadow: 0 -2px 10px rgba(74, 44, 42, 0.05);
       display: flex;
-      gap: 10px;
-      background-color: #fcfaf7;
-      border: 1px solid #dfd0c4;
-      padding: 8px 12px;
-      border-radius: 24px;
-      transition: all 0.2s ease;
+      gap: 1rem;
     }
 
-    /* Effet orange lumineux discret quand on clique sur la zone de texte */
-    .input-wrapper:focus-within {
-      border-color: #e66b37;
-      box-shadow: 0 0 0 3px rgba(230, 107, 55, 0.15);
-      background-color: #ffffff;
-    }
-
-    input[type="text"] {
+    #user-input {
       flex: 1;
-      border: none;
-      background: none;
-      outline: none;
+      padding: 0.8rem 1.2rem;
+      border: 1px solid var(--primary);
+      border-radius: 50px;
       font-size: 1rem;
-      color: #3d342e;
-      padding: 4px;
+      outline: none;
+      background-color: rgba(253, 246, 227, 0.8);
+      color: var(--text);
     }
 
-    input[type="text"]::placeholder {
-      color: #a3958c;
-    }
-
-    button {
-      background-color: #e66b37;
+    #send-button {
+      padding: 0.8rem 1.5rem;
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
       color: white;
       border: none;
-      padding: 8px 18px;
-      border-radius: 18px;
-      font-weight: 600;
+      border-radius: 50px;
       cursor: pointer;
-      font-size: 0.95rem;
-      transition: background-color 0.2s ease, transform 0.1s ease;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(184, 134, 11, 0.3);
     }
 
-    button:hover {
-      background-color: #cc5624; /* Orange un peu plus sombre au survol */
+    #send-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(184, 134, 11, 0.4);
     }
 
-    button:active {
-      transform: scale(0.97);
-    }
-
-    /* Petite animation d'apparition des messages */
+    /* ---- ANIMATIONS ---- */
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---- SCROLLBAR ---- */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--light);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.6rem;
+      }
+
+      #chat-container {
+        padding: 1.2rem;
+      }
+
+      #input-container {
+        padding: 1rem;
+        flex-direction: column;
+      }
+
+      #user-input, #send-button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>Mon Assistant IA</h1>
+    <h1><i class="fas fa-comments me-2"></i>Mon Assistant IA</h1>
   </header>
 
   <div id="chat-container">
-    <div class="message bot-message">Bonjour ! Comment puis-je vous aider aujourd'hui ? ☕</div>
-  </div>
-
-  <div class="input-container">
-    <div class="input-wrapper">
-      <input type="text" id="message" placeholder="Posez votre question ici..." onkeydown="if(event.key === 'Enter') sendMessage()">
-      <button onclick="sendMessage()">Envoyer</button>
+    <!-- Les messages seront ajoutés ici dynamiquement -->
+    <div class="message bot-message">
+      <i class="fas fa-robot me-1"></i> Bonjour ! Comment puis-je vous aider aujourd'hui ?
     </div>
   </div>
 
+  <div id="input-container">
+    <input type="text" id="user-input" placeholder="Écrivez votre message ici...">
+    <button id="send-button">
+      <i class="fas fa-paper-plane"></i> Envoyer
+    </button>
+  </div>
+
   <script>
-    async function sendMessage() {
-      const input = document.getElementById("message");
-      const chatContainer = document.getElementById("chat-container");
-      const messageText = input.value.trim();
+    // Script pour gérer l'envoi de messages
+    document.getElementById('send-button').addEventListener('click', function() {
+      const input = document.getElementById('user-input');
+      const message = input.value.trim();
+      if (message) {
+        const chatContainer = document.getElementById('chat-container');
 
-      if (messageText === "") return;
+        // Ajouter le message de l'utilisateur
+        const userMessage = document.createElement('div');
+        userMessage.className = 'message user-message';
+        userMessage.innerHTML = `<i class="fas fa-user me-1"></i> ${message}`;
+        chatContainer.appendChild(userMessage);
 
-      // 1. Afficher le message de l'utilisateur
-      const userDiv = document.createElement("div");
-      userDiv.className = "message user-message";
-      userDiv.textContent = messageText;
-      chatContainer.appendChild(userDiv);
+        // Réinitialiser l'input
+        input.value = '';
 
-      // Effacer le champ de saisie immédiatement
-      input.value = "";
-      
-      // Faire défiler automatiquement vers le bas
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-
-      try {
-        // 2. Envoyer la requête au serveur (chemin relatif pour Render/Local)
-        const response = await fetch("/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: messageText
-          })
-        });
-
-        const data = await response.json();
-
-        // 3. Afficher la réponse du Bot
-        const botDiv = document.createElement("div");
-        
-        // On vérifie si le serveur a renvoyé une erreur ou une réponse valide
-        if (data.reply.startsWith("Erreur")) {
-          botDiv.className = "message error-message";
-        } else {
-          botDiv.className = "message bot-message";
-        }
-        
-        botDiv.textContent = data.reply;
-        chatContainer.appendChild(botDiv);
-
-      } catch (error) {
-        // En cas de panne de connexion
-        const errorDiv = document.createElement("div");
-        errorDiv.className = "message error-message";
-        errorDiv.textContent = "Erreur : Impossible de joindre le serveur.";
-        chatContainer.appendChild(errorDiv);
+        // Simuler une réponse du bot
+        setTimeout(() => {
+          const botMessage = document.createElement('div');
+          botMessage.className = 'message bot-message';
+          botMessage.innerHTML = '<i class="fas fa-robot me-1"></i> Merci pour votre message ! Je vais y réfléchir.';
+          chatContainer.appendChild(botMessage);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 1000);
       }
+    });
 
-      // Faire défiler à nouveau vers le bas après la réponse
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+    // Permettre l'envoi avec la touche Entrée
+    document.getElementById('user-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('send-button').click();
+      }
+    });
   </script>
-
 </body>
 </html>
