@@ -1,3 +1,4 @@
+// On garde dotenv mais on sécurise son chargement au cas où Node injecte déjà le .env
 try {
   require("dotenv").config();
 } catch (e) {
@@ -10,33 +11,35 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors());
-// On augmente la taille maximale pour accepter les fichiers et images lourdes
+// IMPORTANT : On augmente la limite de taille pour accepter les gros documents convertis en texte
 app.use(express.json({ limit: "50mb" }));
 app.use(express.static("public"));
 
 app.post("/chat", async (req, res) => {
   try {
-    const { message, fileData } = req.body; // <-- Récupération du message ET du fichier joint
+    // Récupération du message ET du fichier envoyé par index.html
+    const { message, fileData } = req.body; 
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey || apiKey.trim() === "") {
+      console.error("[ERREUR] La clé OPENROUTER_API_KEY est introuvable ou vide.");
       return res.json({
-        reply: "Erreur de configuration : La clé API n'a pas pu être chargée par le serveur."
+        reply: "Erreur de configuration : La clé API n'a pas pu être chargée par le serveur. Vérifiez votre configuration Render."
       });
     }
 
-    // Construction de la structure de contexte pour l'IA
+    // Construction du contexte pour l'IA selon la présence d'un fichier
     let contentStructure;
 
     if (fileData) {
-      if (fileData.type.startsWith("image/")) {
-        // Format spécifique pour l'analyse d'images (Vision)
+      if (fileData.type && fileData.type.startsWith("image/")) {
+        // Format pour l'analyse d'images (Vision)
         contentStructure = [
           { type: "text", text: message || "Analyse cette image." },
           { type: "image_url", image_url: { url: fileData.base64 } }
         ];
       } else {
-        // Format pour l'analyse de fichiers documents / textes
+        // Format pour les documents (PPTX, PDF, TXT convertis en texte brut)
         contentStructure = `Voici le contenu du fichier joint (${fileData.name}) :\n---\n${fileData.text}\n---\n\nQuestion de l'utilisateur : ${message}`;
       }
     } else {
@@ -52,8 +55,9 @@ app.post("/chat", async (req, res) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          // Utilisation de Gemini 2.5 Flash : gère la vision, les gros fichiers et offre un contexte géant !
-          model: "google/gemini-2.5-flash", 
+          // MODIFICATION : On force l'usage de Gemini 2.5 Flash en version GRATUITE (:free)
+          // Ce modèle dispose d'une fenêtre de contexte immense, parfaite pour vos documents.
+          model: "google/gemini-2.5-flash:free", 
           messages: [
             {
               role: "user",
@@ -70,17 +74,20 @@ app.post("/chat", async (req, res) => {
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
+      console.error("Impossible de parser la réponse en JSON. Reçu :", responseText);
       return res.json({
         reply: "Désolé, l'API OpenRouter a renvoyé une réponse illisible."
       });
     }
     
+    // Structure de réponse valide
     if (data && data.choices && data.choices[0] && data.choices[0].message) {
       return res.json({
         reply: data.choices[0].message.content
       });
     } 
     
+    // Si OpenRouter renvoie une erreur
     if (data && data.error) {
       return res.json({
         reply: `Erreur API OpenRouter : ${data.error.message || JSON.stringify(data.error)}`
