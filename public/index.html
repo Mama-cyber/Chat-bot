@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mon Chatbot Chaleureux | Luxe Boutique</title>
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -99,6 +97,16 @@
       border: 1px solid rgba(200, 168, 130, 0.3);
     }
 
+    /* Bulle d'erreur (en cas de problème) */
+    .error-message {
+      background-color: #fcece6;
+      color: var(--danger);
+      align-self: center;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      border: 1px dashed rgba(139, 0, 0, 0.3);
+    }
+
     /* ---- BARRE DE SAISIE ---- */
     #input-container {
       padding: 1.5rem 2rem;
@@ -189,7 +197,6 @@
   </header>
 
   <div id="chat-container">
-    <!-- Les messages seront ajoutés ici dynamiquement -->
     <div class="message bot-message">
       <i class="fas fa-robot me-1"></i> Bonjour ! Comment puis-je vous aider aujourd'hui ?
     </div>
@@ -203,37 +210,69 @@
   </div>
 
   <script>
-    // Script pour gérer l'envoi de messages
-    document.getElementById('send-button').addEventListener('click', function() {
+    async function sendMessage() {
       const input = document.getElementById('user-input');
-      const message = input.value.trim();
-      if (message) {
-        const chatContainer = document.getElementById('chat-container');
+      const chatContainer = document.getElementById('chat-container');
+      const messageText = input.value.trim();
+      
+      if (!messageText) return;
 
-        // Ajouter le message de l'utilisateur
-        const userMessage = document.createElement('div');
-        userMessage.className = 'message user-message';
-        userMessage.innerHTML = `<i class="fas fa-user me-1"></i> ${message}`;
-        chatContainer.appendChild(userMessage);
+      // 1. Ajouter le message de l'utilisateur à l'écran
+      const userMessage = document.createElement('div');
+      userMessage.className = 'message user-message';
+      userMessage.innerHTML = `<i class="fas fa-user me-1"></i> ${messageText}`;
+      chatContainer.appendChild(userMessage);
 
-        // Réinitialiser l'input
-        input.value = '';
+      // Vider l'input et faire défiler vers le bas
+      input.value = '';
+      chatContainer.scrollTop = chatContainer.scrollHeight;
 
-        // Simuler une réponse du bot
-        setTimeout(() => {
-          const botMessage = document.createElement('div');
+      try {
+        // 2. Appeler le serveur backend (chemin relatif requis pour Render)
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: messageText
+          })
+        });
+
+        const data = await response.json();
+
+        // 3. Créer la bulle de réponse du Bot
+        const botMessage = document.createElement('div');
+        
+        if (data.reply && data.reply.startsWith("Erreur")) {
+          botMessage.className = 'message error-message';
+          botMessage.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${data.reply}`;
+        } else {
           botMessage.className = 'message bot-message';
-          botMessage.innerHTML = '<i class="fas fa-robot me-1"></i> Merci pour votre message ! Je vais y réfléchir.';
-          chatContainer.appendChild(botMessage);
-          chatContainer.scrollTop = chatContainer.scrollHeight;
-        }, 1000);
-      }
-    });
+          botMessage.innerHTML = `<i class="fas fa-robot me-1"></i> ${data.reply}`;
+        }
+        
+        chatContainer.appendChild(botMessage);
 
-    // Permettre l'envoi avec la touche Entrée
+      } catch (error) {
+        // Gestion des pannes réseaux
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'message error-message';
+        errorMessage.innerHTML = `<i class="fas fa-wifi me-1"></i> Erreur : Impossible de contacter l'IA pour le moment.`;
+        chatContainer.appendChild(errorMessage);
+      }
+
+      // Faire défiler automatiquement vers le bas après la réponse
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Événement Clic sur le bouton
+    document.getElementById('send-button').addEventListener('click', sendMessage);
+
+    // Événement Touche Entrée
     document.getElementById('user-input').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
-        document.getElementById('send-button').click();
+        sendMessage();
       }
     });
   </script>
