@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Chatbot Chaleureux | Luxe Boutique</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+<body>
+
+  <header>
+    <h1><i class="fas fa-comments me-2"></i> Mon Assistant IA</h1>
+  </header>
+
+  <div id="chat-container">
+    <div class="message bot-message">
+      <button class="copy-btn" onclick="copyText(this, 'Bonjour ! Vous pouvez m\'envoyer un message, une image ou un fichier texte.')"><i class="fas fa-copy"></i></button>
+      <div class="message-text-content">
+        <i class="fas fa-robot me-1"></i> Bonjour ! Vous pouvez m'envoyer un message, une image ou un fichier texte.
+      </div>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <div id="preview-container">
+      <span id="preview-content"></span>
+      <i class="fas fa-times" id="remove-file" onclick="clearFile()"></i>
+    </div>
+
+    <div id="input-container">
+      <label class="file-upload-btn" for="file-input">
+        <i class="fas fa-paperclip"></i>
+      </label>
+      <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)">
+
+      <input type="text" id="user-input" placeholder="Écrivez votre message ici...">
+      <button id="send-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script>
+    let selectedFile = null;
+
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      selectedFile = { name: file.name, type: file.type };
+      const reader = new FileReader();
+      const previewContainer = document.getElementById("preview-container");
+      const previewContent = document.getElementById("preview-content");
+
+      if (file.type.startsWith("image/")) {
+        reader.onload = function(e) {
+          selectedFile.base64 = e.target.result;
+          previewContent.innerHTML = `<img src="${e.target.result}"> <span>${file.name}</span>`;
+          previewContainer.style.display = "flex";
+        };
+        reader.readAsDataURL(file);
+      } else {
+        reader.onload = function(e) {
+          selectedFile.text = e.target.result;
+          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name}</span>`;
+          previewContainer.style.display = "flex";
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      document.getElementById("file-input").value = "";
+      document.getElementById("preview-container").style.display = "none";
+    }
+
+    // ---- FONCTION POUR COPIER LE TEXTE ----
+    function copyText(button, textToCopy) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        // Changement visuel pour confirmer la copie
+        button.classList.add('copied');
+        button.innerHTML = `<i class="fas fa-check"></i>`;
+        
+        // Remettre l'icône de base après 2 secondes
+        setTimeout(() => {
+          button.classList.remove('copied');
+          button.innerHTML = `<i class="fas fa-copy"></i>`;
+        }, 2000);
+      }).catch(err => {
+        console.error("Erreur lors de la copie : ", err);
+      });
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const chatContainer = document.getElementById('chat-container');
+      const messageText = input.value.trim();
+      
+      if (!messageText && !selectedFile) return;
+
+      // 1. Afficher le message utilisateur
+      const userMessage = document.createElement('div');
+      userMessage.className = 'message user-message';
+      
+      // Préparation du texte à mettre dans le presse-papier pour le prompt
+      let textForClipboard = messageText;
+
+      let userHTML = `<i class="fas fa-user me-1"></i> `;
+      if (selectedFile) {
+        const prefix = selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `;
+        userHTML += prefix;
+        textForClipboard = prefix + textForClipboard;
+      }
+      
+      // Insertion de la structure HTML du message
+      userMessage.innerHTML = `
+        <button class="copy-btn"><i class="fas fa-copy"></i></button>
+        <div class="message-text-content">${userHTML}<span class="text-raw"></span></div>
+      `;
+      userMessage.querySelector('.text-raw').textContent = messageText;
+      
+      // Attribution de l'action de copie sur le bouton du prompt
+      userMessage.querySelector('.copy-btn').onclick = function() {
+        copyText(this, textForClipboard);
+      };
+
+      chatContainer.appendChild(userMessage);
+
+      const fileToSend = selectedFile;
+      clearFile();
+      input.value = '';
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      // 2. Afficher l'icône de réflexion
+      const loadingMessage = document.createElement('div');
+      loadingMessage.className = 'message bot-message loading-message';
+      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant analyse votre demande...`;
+      chatContainer.appendChild(loadingMessage);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      try {
+        // 3. Envoi au serveur
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: messageText, fileData: fileToSend })
+        });
+
+        const data = await response.json();
+        chatContainer.removeChild(loadingMessage);
+
+        // 4. Affichage de la réponse du bot
+        const botMessage = document.createElement('div');
+        if (data.reply && data.reply.startsWith("Erreur")) {
+          botMessage.className = 'message error-message';
+          botMessage.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${data.reply}`;
+        } else {
+          botMessage.className = 'message bot-message';
+          const htmlReply = marked.parse(data.reply);
+          
+          botMessage.innerHTML = `
+            <button class="copy-btn"><i class="fas fa-copy"></i></button>
+            <div class="message-text-content">
+              <i class="fas fa-robot me-1"></i><div class="bot-message-content">${htmlReply}</div>
+            </div>
+          `;
+          
+          // Attribution de l'action de copie sur le bouton de la réponse IA
+          botMessage.querySelector('.copy-btn').onclick = function() {
+            copyText(this, data.reply);
+          };
+        }
+        chatContainer.appendChild(botMessage);
+
+      } catch (error) {
+        if (chatContainer.contains(loadingMessage)) chatContainer.removeChild(loadingMessage);
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'message error-message';
+        errorMessage.innerHTML = `<i class="fas fa-wifi me-1"></i> Erreur réseau : Impossible d'analyser la demande.`;
+        chatContainer.appendChild(errorMessage);
+      }
+
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    document.getElementById('user-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>
