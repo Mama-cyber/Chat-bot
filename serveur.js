@@ -55,15 +55,15 @@ app.post("/chat", async (req, res) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          // MODIFICATION : On force l'usage de Gemini 2.5 Flash en version GRATUITE (:free)
-          // Ce modèle dispose d'une fenêtre de contexte immense, parfaite pour vos documents.
-          model: "meta-llama/llama-3.3-70b-instruct:free", 
-          messages: [
-            {
-              role: "user",
-              content: contentStructure
-            }
-          ]
+           // C'est l'identifiant officiel exact sur OpenRouter pour la version gratuite de Gemini 2.5 Flash.
+           // Ce modèle possède des yeux (Vision) ET accepte d'immenses fichiers textes (1 million de tokens) !
+           model: "google/gemini-2.5-flash", 
+           messages: [
+             {
+                role: "user",
+                content: contentStructure
+             }
+           ]
         })
       }
     );
