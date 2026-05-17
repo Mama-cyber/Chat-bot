@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Axiom</title>
+  <title>Axiom | Assistant IA</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
 </head>
 <body>
 
   <header>
-    <h1>   Axiom</h1>
+    <h1>Axiom</h1>
   </header>
 
   <div id="chat-container">
     <div class="message bot-message">
-      <button class="copy-btn" onclick="copyText(this, 'Bonjour ! Vous pouvez m\'envoyer un message, une image ou un fichier texte.')"><i class="fas fa-copy"></i></button>
+      <button class="copy-btn" onclick="copyText(this, 'Bonjour ! Vous pouvez m\'envoyer un message, une image ou un fichier texte.')">
+        <i class="fas fa-copy"></i>
+      </button>
       <div class="message-text-content">
         <i class="fas fa-robot me-1"></i> Bonjour, comment puis-je vous aider aujourd'hui ?
       </div>
@@ -39,13 +40,16 @@
       <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)">
 
       <input type="text" id="user-input" placeholder="Écrivez votre message ici...">
-      <button id="send-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+      <button id="send-button" onclick="sendMessage()">
+        <i class="fas fa-paper-plane"></i> Envoyer
+      </button>
     </div>
   </div>
 
   <script>
-    let selectedFile = null;
+    let selectedFile = null; // Stocke l'objet du fichier en cours
 
+    // ---- GESTION, SÉLECTION ET COMPRESSION DES FICHIERS ----
     function handleFileSelect(input) {
       const file = input.files[0];
       if (!file) return;
@@ -56,6 +60,7 @@
       const previewContent = document.getElementById("preview-content");
 
       if (file.type.startsWith("image/")) {
+        // Traitement de l'image (Vision) -> Encodage en Base64
         reader.onload = function(e) {
           selectedFile.base64 = e.target.result;
           previewContent.innerHTML = `<img src="${e.target.result}"> <span>${file.name}</span>`;
@@ -63,38 +68,57 @@
         };
         reader.readAsDataURL(file);
       } else {
+        // Traitement des documents (PPTX, PDF, TXT) -> NETTOYAGE ET COMPRESSION INTELLIGENTE
         reader.onload = function(e) {
-          selectedFile.text = e.target.result;
-          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name}</span>`;
+          let rawText = e.target.result;
+
+          // Algorithme de compression de texte (retire le superflus pour préserver les tokens)
+          let cleanText = rawText.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+          cleanText = cleanText.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+          cleanText = cleanText.replace(/<[^>]+>/g, ' '); // Enlève le balisage XML/HTML lourd des PPTX
+          cleanText = cleanText.replace(/[^\w\sàâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ.,!?;:-]/g, ''); // Élimine les caractères binaires corrompus
+          cleanText = cleanText.replace(/\s+/g, ' ').trim(); // Fusionne les espaces multiples et sauts de ligne
+
+          // Limite de secours pour sécuriser le quota
+          if (cleanText.length > 150000) {
+            cleanText = cleanText.substring(0, 150000) + "... [Texte volumineux compressé pour l'IA]";
+          }
+
+          selectedFile.text = cleanText;
+          
+          // Suivi de performance dans la console (F12)
+          console.log(`[Compression] Initial : ${rawText.length} caractères -> Nettoyé : ${cleanText.length} caractères.`);
+
+          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name} (Prêt à l'analyse)</span>`;
           previewContainer.style.display = "flex";
         };
         reader.readAsText(file);
       }
     }
 
+    // Réinitialiser le fichier sélectionné
     function clearFile() {
       selectedFile = null;
       document.getElementById("file-input").value = "";
       document.getElementById("preview-container").style.display = "none";
     }
 
-    // ---- FONCTION POUR COPIER LE TEXTE ----
+    // ---- FONCTION COPIER DANS LE PRESSE-PAPIERS ----
     function copyText(button, textToCopy) {
       navigator.clipboard.writeText(textToCopy).then(() => {
-        // Changement visuel pour confirmer la copie
         button.classList.add('copied');
         button.innerHTML = `<i class="fas fa-check"></i>`;
         
-        // Remettre l'icône de base après 2 secondes
         setTimeout(() => {
           button.classList.remove('copied');
           button.innerHTML = `<i class="fas fa-copy"></i>`;
         }, 2000);
       }).catch(err => {
-        console.error("Erreur lors de la copie : ", err);
+        console.error("Échec de la copie : ", err);
       });
     }
 
+    // ---- ENVOI DU MESSAGE AU SERVEUR ----
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
@@ -102,12 +126,13 @@
       
       if (!messageText && !selectedFile) return;
 
-      // 1. Afficher le message utilisateur sur l'écran
+      // 1. Ajouter le message de l'utilisateur à l'écran
       const userMessage = document.createElement('div');
       userMessage.className = 'message user-message';
       
       let textForClipboard = messageText;
       let userHTML = `<i class="fas fa-user me-1"></i> `;
+      
       if (selectedFile) {
         const prefix = selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `;
         userHTML += prefix;
@@ -126,13 +151,13 @@
 
       chatContainer.appendChild(userMessage);
 
-      // Sauvegarde locale du fichier avant de nettoyer la prévisualisation graphique
+      // Sauvegarde des données à envoyer avant de réinitialiser l'interface
       const fileToSend = selectedFile;
       clearFile();
       input.value = '';
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
-      // 2. Afficher la bulle de chargement
+      // 2. Afficher la bulle de chargement animée
       const loadingMessage = document.createElement('div');
       loadingMessage.className = 'message bot-message loading-message';
       loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant analyse votre demande...`;
@@ -140,27 +165,27 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       try {
-        // 3. Envoi au serveur (Inclusion du message ET de l'objet fileToSend !)
+        // 3. Appel AJAX vers votre backend Render
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             message: messageText, 
-            fileData: fileToSend // <-- La correction est ici !
+            fileData: fileToSend // Envoi conjoint du message et du fichier compressé
           })
         });
 
         const data = await response.json();
-        chatContainer.removeChild(loadingMessage);
+        chatContainer.removeChild(loadingMessage); // Suppression de la bulle de chargement
 
-        // 4. Affichage de la réponse finale stylisée en Markdown
+        // 4. Afficher la réponse de l'IA
         const botMessage = document.createElement('div');
         if (data.reply && data.reply.startsWith("Erreur")) {
           botMessage.className = 'message error-message';
           botMessage.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${data.reply}`;
         } else {
           botMessage.className = 'message bot-message';
-          const htmlReply = marked.parse(data.reply);
+          const htmlReply = marked.parse(data.reply); // Conversion du Markdown renvoyé par l'IA
           
           botMessage.innerHTML = `
             <button class="copy-btn"><i class="fas fa-copy"></i></button>
@@ -185,6 +210,8 @@
 
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
+
+    // Raccourci clavier Touche Entrée
     document.getElementById('user-input').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') sendMessage();
     });
