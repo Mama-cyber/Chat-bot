@@ -47,9 +47,14 @@
   </div>
 
   <script>
-    let selectedFile = null; // Stocke l'objet du fichier en cours
+    let selectedFile = null;
+    
+    // ---- AJOUT DE LA MÉMOIRE ----
+    // Ce tableau va stocker toute la discussion en cours au format attendu par l'IA
+    let conversationHistory = [
+      { role: "assistant", content: "Bonjour, comment puis-je vous aider aujourd'hui ?" }
+    ];
 
-    // ---- GESTION, SÉLECTION ET COMPRESSION DES FICHIERS ----
     function handleFileSelect(input) {
       const file = input.files[0];
       if (!file) return;
@@ -60,7 +65,6 @@
       const previewContent = document.getElementById("preview-content");
 
       if (file.type.startsWith("image/")) {
-        // Traitement de l'image (Vision) -> Encodage en Base64
         reader.onload = function(e) {
           selectedFile.base64 = e.target.result;
           previewContent.innerHTML = `<img src="${e.target.result}"> <span>${file.name}</span>`;
@@ -68,47 +72,36 @@
         };
         reader.readAsDataURL(file);
       } else {
-        // Traitement des documents (PPTX, PDF, TXT) -> NETTOYAGE ET COMPRESSION INTELLIGENTE
         reader.onload = function(e) {
           let rawText = e.target.result;
-
-          // Algorithme de compression de texte (retire le superflus pour préserver les tokens)
           let cleanText = rawText.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
           cleanText = cleanText.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-          cleanText = cleanText.replace(/<[^>]+>/g, ' '); // Enlève le balisage XML/HTML lourd des PPTX
-          cleanText = cleanText.replace(/[^\w\sàâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ.,!?;:-]/g, ''); // Élimine les caractères binaires corrompus
-          cleanText = cleanText.replace(/\s+/g, ' ').trim(); // Fusionne les espaces multiples et sauts de ligne
+          cleanText = cleanText.replace(/<[^>]+>/g, ' '); 
+          cleanText = cleanText.replace(/[^a-zA-Z0-9àâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ\s.,!?;:()'\-""\n]/g, ' ');
+          cleanText = cleanText.replace(/\s+/g, ' ').trim(); 
 
-          // Limite de secours pour sécuriser le quota
-          if (cleanText.length > 150000) {
-            cleanText = cleanText.substring(0, 150000) + "... [Texte volumineux compressé pour l'IA]";
+          if (cleanText.length > 80000) {
+            cleanText = cleanText.substring(0, 80000) + "... [Texte extrait et condensé pour des raisons de taille]";
           }
 
           selectedFile.text = cleanText;
-          
-          // Suivi de performance dans la console (F12)
-          console.log(`[Compression] Initial : ${rawText.length} caractères -> Nettoyé : ${cleanText.length} caractères.`);
-
-          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name} (Prêt à l'analyse)</span>`;
+          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name} (Prêt)</span>`;
           previewContainer.style.display = "flex";
         };
         reader.readAsText(file);
       }
     }
 
-    // Réinitialiser le fichier sélectionné
     function clearFile() {
       selectedFile = null;
       document.getElementById("file-input").value = "";
       document.getElementById("preview-container").style.display = "none";
     }
 
-    // ---- FONCTION COPIER DANS LE PRESSE-PAPIERS ----
     function copyText(button, textToCopy) {
       navigator.clipboard.writeText(textToCopy).then(() => {
         button.classList.add('copied');
         button.innerHTML = `<i class="fas fa-check"></i>`;
-        
         setTimeout(() => {
           button.classList.remove('copied');
           button.innerHTML = `<i class="fas fa-copy"></i>`;
@@ -118,7 +111,6 @@
       });
     }
 
-    // ---- ENVOI DU MESSAGE AU SERVEUR ----
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
@@ -126,7 +118,7 @@
       
       if (!messageText && !selectedFile) return;
 
-      // 1. Ajouter le message de l'utilisateur à l'écran
+      // Afficher le message utilisateur à l'écran
       const userMessage = document.createElement('div');
       userMessage.className = 'message user-message';
       
@@ -151,41 +143,56 @@
 
       chatContainer.appendChild(userMessage);
 
-      // Sauvegarde des données à envoyer avant de réinitialiser l'interface
+      // --- STRUCTURATION DU MESSAGE POUR L'HISTORIQUE DE L'IA ---
+      let contentStructure;
+      if (selectedFile) {
+        if (selectedFile.type.startsWith("image/")) {
+          contentStructure = [
+            { type: "text", text: messageText || "Analyse cette image." },
+            { type: "image_url", image_url: { url: selectedFile.base64 } }
+          ];
+        } else {
+          contentStructure = `Voici le contenu du fichier joint (${selectedFile.name}) :\n---\n${selectedFile.text}\n---\n\nQuestion : ${messageText}`;
+        }
+      } else {
+        contentStructure = messageText;
+      }
+
+      // On ajoute le message de l'utilisateur à notre mémoire locale
+      conversationHistory.push({ role: "user", content: contentStructure });
+
       const fileToSend = selectedFile;
       clearFile();
       input.value = '';
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
-      // 2. Afficher la bulle de chargement animée
+      // Afficher le chargement
       const loadingMessage = document.createElement('div');
       loadingMessage.className = 'message bot-message loading-message';
-      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant analyse votre demande...`;
+      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant réfléchit...`;
       chatContainer.appendChild(loadingMessage);
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       try {
-        // 3. Appel AJAX vers votre backend Render
+        // Envoi de TOUT l'historique au serveur
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            message: messageText, 
-            fileData: fileToSend // Envoi conjoint du message et du fichier compressé
+            history: conversationHistory // <-- On envoie tout le tableau ici !
           })
         });
 
         const data = await response.json();
-        chatContainer.removeChild(loadingMessage); // Suppression de la bulle de chargement
+        chatContainer.removeChild(loadingMessage);
 
-        // 4. Afficher la réponse de l'IA
         const botMessage = document.createElement('div');
         if (data.reply && data.reply.startsWith("Erreur")) {
           botMessage.className = 'message error-message';
           botMessage.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${data.reply}`;
         } else {
           botMessage.className = 'message bot-message';
-          const htmlReply = marked.parse(data.reply); // Conversion du Markdown renvoyé par l'IA
+          const htmlReply = marked.parse(data.reply);
           
           botMessage.innerHTML = `
             <button class="copy-btn"><i class="fas fa-copy"></i></button>
@@ -197,6 +204,9 @@
           botMessage.querySelector('.copy-btn').onclick = function() {
             copyText(this, data.reply);
           };
+
+          // On ajoute la réponse de l'IA à notre mémoire locale pour le prochain tour !
+          conversationHistory.push({ role: "assistant", content: data.reply });
         }
         chatContainer.appendChild(botMessage);
 
@@ -204,14 +214,13 @@
         if (chatContainer.contains(loadingMessage)) chatContainer.removeChild(loadingMessage);
         const errorMessage = document.createElement('div');
         errorMessage.className = 'message error-message';
-        errorMessage.innerHTML = `<i class="fas fa-wifi me-1"></i> Erreur réseau : Impossible d'analyser la demande.`;
+        errorMessage.innerHTML = `<i class="fas fa-wifi me-1"></i> Erreur réseau.`;
         chatContainer.appendChild(errorMessage);
       }
 
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // Raccourci clavier Touche Entrée
     document.getElementById('user-input').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') sendMessage();
     });
