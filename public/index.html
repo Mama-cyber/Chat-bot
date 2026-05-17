@@ -6,6 +6,9 @@
   <title>Mon Chatbot Chaleureux | Luxe Boutique</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <style>
     :root {
       --primary: #C8A882; /* Beige doré */
@@ -79,6 +82,25 @@
       word-wrap: break-word;
       animation: fadeIn 0.4s ease;
       box-shadow: 0 2px 8px rgba(74, 44, 42, 0.08);
+    }
+
+    /* Ajustement pour aligner l'icône de robot au-dessus du texte mis en forme */
+    .bot-message-content {
+      margin-top: 5px;
+    }
+
+    /* Style pour les listes générées par l'IA afin qu'elles restent dans la bulle */
+    .bot-message-content ul, .bot-message-content ol {
+      margin-left: 20px;
+      padding-left: 5px;
+    }
+
+    .bot-message-content p {
+      margin-bottom: 8px;
+    }
+    
+    .bot-message-content p:last-child {
+      margin-bottom: 0;
     }
 
     /* Bulle de l'utilisateur (à droite) */
@@ -217,10 +239,16 @@
       
       if (!messageText) return;
 
-      // 1. Ajouter le message de l'utilisateur à l'écran
+      // 1. Ajouter le message de l'utilisateur à l'écran (Texte brut sécurisé)
       const userMessage = document.createElement('div');
       userMessage.className = 'message user-message';
-      userMessage.innerHTML = `<i class="fas fa-user me-1"></i> ${messageText}`;
+      userMessage.innerHTML = `<i class="fas fa-user me-1"></i> `;
+      
+      // Utilisation d'un span de texte pour éviter les failles XSS côté utilisateur
+      const textSpan = document.createElement('span');
+      textSpan.textContent = messageText;
+      userMessage.appendChild(textSpan);
+      
       chatContainer.appendChild(userMessage);
 
       // Vider l'input et faire défiler vers le bas
@@ -228,7 +256,7 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       try {
-        // 2. Appeler le serveur backend (chemin relatif requis pour Render)
+        // 2. Appeler le serveur backend
         const response = await fetch("/chat", {
           method: "POST",
           headers: {
@@ -249,7 +277,10 @@
           botMessage.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${data.reply}`;
         } else {
           botMessage.className = 'message bot-message';
-          botMessage.innerHTML = `<i class="fas fa-robot me-1"></i> ${data.reply}`;
+          
+          // MODIFICATION : On transforme le Markdown de l'IA en HTML propre grâce à marked.parse()
+          const htmlReply = marked.parse(data.reply);
+          botMessage.innerHTML = `<i class="fas fa-robot me-1"></i><div class="bot-message-content">${htmlReply}</div>`;
         }
         
         chatContainer.appendChild(botMessage);
