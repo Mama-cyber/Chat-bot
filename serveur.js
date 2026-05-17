@@ -11,13 +11,13 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors());
-// IMPORTANT : On augmente la limite de taille pour accepter les gros documents convertis en texte
+// IMPORTANT : On laisse la limite à 50mb pour que le serveur accepte les gros volumes de texte/images
 app.use(express.json({ limit: "50mb" }));
 app.use(express.static("public"));
 
 app.post("/chat", async (req, res) => {
   try {
-    // Récupération du message ET du fichier envoyé par index.html
+    // Récupération du message et du fichier envoyé par index.html
     const { message, fileData } = req.body; 
     const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -28,7 +28,7 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    // Construction du contexte pour l'IA selon la présence d'un fichier
+    // Construction du contexte pour l'IA
     let contentStructure;
 
     if (fileData) {
@@ -39,7 +39,7 @@ app.post("/chat", async (req, res) => {
           { type: "image_url", image_url: { url: fileData.base64 } }
         ];
       } else {
-        // Format pour les documents (PPTX, PDF, TXT convertis en texte brut)
+        // Format pour les documents (PPTX, PDF, TXT convertis en texte nettoyé)
         contentStructure = `Voici le contenu du fichier joint (${fileData.name}) :\n---\n${fileData.text}\n---\n\nQuestion de l'utilisateur : ${message}`;
       }
     } else {
@@ -55,15 +55,15 @@ app.post("/chat", async (req, res) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-           // C'est l'identifiant officiel exact sur OpenRouter pour la version gratuite de Gemini 2.5 Flash.
-           // Ce modèle possède des yeux (Vision) ET accepte d'immenses fichiers textes (1 million de tokens) !
-           model: "google/gemini-2.5-flash", 
-           messages: [
-             {
-                role: "user",
-                content: contentStructure
-             }
-           ]
+          // RETOUR AU CHOIX AUTOMATIQUE GRATUIT :
+          // OpenRouter choisira le meilleur modèle gratuit disponible à l'instant T.
+          model: "openrouter/free", 
+          messages: [
+            {
+              role: "user",
+              content: contentStructure
+            }
+          ]
         })
       }
     );
