@@ -84,12 +84,10 @@
       box-shadow: 0 2px 8px rgba(74, 44, 42, 0.08);
     }
 
-    /* Ajustement pour aligner l'icône de robot au-dessus du texte mis en forme */
     .bot-message-content {
       margin-top: 5px;
     }
 
-    /* Style pour les listes générées par l'IA afin qu'elles restent dans la bulle */
     .bot-message-content ul, .bot-message-content ol {
       margin-left: 20px;
       padding-left: 5px;
@@ -117,6 +115,21 @@
       color: var(--text);
       align-self: flex-start;
       border: 1px solid rgba(200, 168, 130, 0.3);
+    }
+
+    /* Style spécifique pour la bulle de chargement */
+    .loading-message {
+      background-color: rgba(255, 255, 255, 0.5);
+      color: var(--primary);
+      font-style: italic;
+      border: 1px dashed rgba(200, 168, 130, 0.5);
+      box-shadow: none;
+    }
+
+    /* Animation de rotation pour l'icône de chargement */
+    .fa-spinner {
+      color: var(--secondary);
+      margin-right: 8px;
     }
 
     /* Bulle d'erreur (en cas de problème) */
@@ -239,12 +252,11 @@
       
       if (!messageText) return;
 
-      // 1. Ajouter le message de l'utilisateur à l'écran (Texte brut sécurisé)
+      // 1. Ajouter le message de l'utilisateur à l'écran
       const userMessage = document.createElement('div');
       userMessage.className = 'message user-message';
       userMessage.innerHTML = `<i class="fas fa-user me-1"></i> `;
       
-      // Utilisation d'un span de texte pour éviter les failles XSS côté utilisateur
       const textSpan = document.createElement('span');
       textSpan.textContent = messageText;
       userMessage.appendChild(textSpan);
@@ -255,8 +267,15 @@
       input.value = '';
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
+      // 2. AJOUT : Créer et afficher la bulle de chargement animée
+      const loadingMessage = document.createElement('div');
+      loadingMessage.className = 'message bot-message loading-message';
+      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant réfléchit...`;
+      chatContainer.appendChild(loadingMessage);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
       try {
-        // 2. Appeler le serveur backend
+        // 3. Appeler le serveur backend
         const response = await fetch("/chat", {
           method: "POST",
           headers: {
@@ -269,7 +288,10 @@
 
         const data = await response.json();
 
-        // 3. Créer la bulle de réponse du Bot
+        // RETRAIT : On supprime l'indicateur de chargement avant d'afficher la réponse
+        chatContainer.removeChild(loadingMessage);
+
+        // 4. Créer la bulle de réponse finale du Bot
         const botMessage = document.createElement('div');
         
         if (data.reply && data.reply.startsWith("Erreur")) {
@@ -277,8 +299,6 @@
           botMessage.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> ${data.reply}`;
         } else {
           botMessage.className = 'message bot-message';
-          
-          // MODIFICATION : On transforme le Markdown de l'IA en HTML propre grâce à marked.parse()
           const htmlReply = marked.parse(data.reply);
           botMessage.innerHTML = `<i class="fas fa-robot me-1"></i><div class="bot-message-content">${htmlReply}</div>`;
         }
@@ -286,6 +306,11 @@
         chatContainer.appendChild(botMessage);
 
       } catch (error) {
+        // RETRAIT : On enlève le chargement même s'il y a une erreur réseau
+        if (chatContainer.contains(loadingMessage)) {
+          chatContainer.removeChild(loadingMessage);
+        }
+
         // Gestion des pannes réseaux
         const errorMessage = document.createElement('div');
         errorMessage.className = 'message error-message';
