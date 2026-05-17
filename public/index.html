@@ -102,13 +102,11 @@
       
       if (!messageText && !selectedFile) return;
 
-      // 1. Afficher le message utilisateur
+      // 1. Afficher le message utilisateur sur l'écran
       const userMessage = document.createElement('div');
       userMessage.className = 'message user-message';
       
-      // Préparation du texte à mettre dans le presse-papier pour le prompt
       let textForClipboard = messageText;
-
       let userHTML = `<i class="fas fa-user me-1"></i> `;
       if (selectedFile) {
         const prefix = selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `;
@@ -116,26 +114,25 @@
         textForClipboard = prefix + textForClipboard;
       }
       
-      // Insertion de la structure HTML du message
       userMessage.innerHTML = `
         <button class="copy-btn"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">${userHTML}<span class="text-raw"></span></div>
       `;
       userMessage.querySelector('.text-raw').textContent = messageText;
       
-      // Attribution de l'action de copie sur le bouton du prompt
       userMessage.querySelector('.copy-btn').onclick = function() {
         copyText(this, textForClipboard);
       };
 
       chatContainer.appendChild(userMessage);
 
+      // Sauvegarde locale du fichier avant de nettoyer la prévisualisation graphique
       const fileToSend = selectedFile;
       clearFile();
       input.value = '';
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
-      // 2. Afficher l'icône de réflexion
+      // 2. Afficher la bulle de chargement
       const loadingMessage = document.createElement('div');
       loadingMessage.className = 'message bot-message loading-message';
       loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant analyse votre demande...`;
@@ -143,17 +140,20 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       try {
-        // 3. Envoi au serveur
+        // 3. Envoi au serveur (Inclusion du message ET de l'objet fileToSend !)
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: messageText, fileData: fileToSend })
+          body: JSON.stringify({ 
+            message: messageText, 
+            fileData: fileToSend // <-- La correction est ici !
+          })
         });
 
         const data = await response.json();
         chatContainer.removeChild(loadingMessage);
 
-        // 4. Affichage de la réponse du bot
+        // 4. Affichage de la réponse finale stylisée en Markdown
         const botMessage = document.createElement('div');
         if (data.reply && data.reply.startsWith("Erreur")) {
           botMessage.className = 'message error-message';
@@ -169,7 +169,6 @@
             </div>
           `;
           
-          // Attribution de l'action de copie sur le bouton de la réponse IA
           botMessage.querySelector('.copy-btn').onclick = function() {
             copyText(this, data.reply);
           };
@@ -186,7 +185,6 @@
 
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-
     document.getElementById('user-input').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') sendMessage();
     });
