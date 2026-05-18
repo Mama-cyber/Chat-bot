@@ -52,7 +52,7 @@
 
   </div>
 
-  <script {contentFetchId="uploaded:index.html-e5758a03-7049-43c2-8414-938f36c535fb"}>
+  <script>
     let selectedFile = null;
     
     // STRUCTURE MULTI-CHATS
@@ -60,11 +60,20 @@
     let currentChatId = null;
 
     // VARIABLES DE CONTRÔLE POUR LE STOP
-    let isGenerating = false; // Indique si l'IA est en train d'écrire
-    let currentAbortController = null; // Contiendra le signal d'interruption réseau
+    let isGenerating = false; 
+    let currentAbortController = null; 
 
     window.onload = function() {
       renderSidebar();
+      
+      // Force la sidebar à être fermée par défaut dès le chargement de la page
+      const sidebar = document.getElementById('sidebar');
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+      } else {
+        sidebar.classList.add('closed'); 
+      }
+
       if (Object.keys(allChats).length > 0) {
         const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
         loadChat(sortedIds[0]);
@@ -73,7 +82,6 @@
       }
     };
 
-    // Fermeture automatique au clic à l'extérieur sur mobile
     document.addEventListener('click', function(event) {
       if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
@@ -101,7 +109,7 @@
         textSpan.className = 'history-item-text';
         textSpan.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
         textSpan.onclick = () => {
-          if (isGenerating) return; // Empêche de changer de chat pendant qu'on génère
+          if (isGenerating) return; 
           loadChat(id);
           if(window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.remove('open');
@@ -267,7 +275,6 @@
       return msgDiv;
     }
 
-    // FONCTION COMMUNE POUR LE BOUTON D'ACTION (ENVOYER OU STOP)
     function handleActionClick() {
       if (isGenerating) {
         stopGeneration();
@@ -276,14 +283,12 @@
       }
     }
 
-    // FONCTION DE DÉCLENCHEMENT DU STOP
     function stopGeneration() {
       if (currentAbortController) {
-        currentAbortController.abort(); // Interrompt la requête réseau Fetch immédiatement !
+        currentAbortController.abort(); 
       }
     }
 
-    // LOGIQUE DE GÉNÉRATION ET DE FLUX MIS À JOUR AVEC SÉCURITÉ ABORT
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
@@ -293,11 +298,10 @@
       
       if (!messageText && !selectedFile) return;
 
-      // 1. Passage de l'interface en mode "Génération en cours" (Le bouton devient un carré Stop)
       isGenerating = true;
       buttonIcon.className = "fas fa-stop";
-      sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
-      // Initialisation du contrôleur d'interruption
+      sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))"; // Reste de la même couleur
+
       currentAbortController = new AbortController();
       const { signal } = currentAbortController;
 
@@ -348,7 +352,6 @@
       let fullResponseText = ""; 
 
       try {
-        // On passe l'option { signal } au fetch pour le rendre interruptible
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -397,10 +400,8 @@
         }
 
       } catch (error) {
-        // DETECTION DU CLIC SUR LE BOUTON STOP
         if (error.name === 'AbortError') {
           console.log("Génération interrompue de force par l'utilisateur.");
-          // On ajoute une petite mention visuelle discrète à la fin
           fullResponseText += " *[Réponse interrompue]*";
           renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
         } else {
@@ -409,7 +410,6 @@
           botMessage.className = 'message error-message';
         }
       } finally {
-        // Dans tous les cas (fin normale, erreur ou arrêt forcé), on enregistre l'état actuel
         if (fullResponseText.trim() !== "") {
           botMessage.querySelector('.copy-btn').onclick = function() {
             copyText(this, fullResponseText);
@@ -419,12 +419,10 @@
           saveToStorage();
         }
         
-        // Remise à zéro du bouton
         finalizeGenerationState();
       }
     }
 
-    // REMET LE BOUTON EN MODE "FLECHE D'ENVOI"
     function finalizeGenerationState() {
       isGenerating = false;
       currentAbortController = null;
