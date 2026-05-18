@@ -61,7 +61,7 @@
     window.onload = function() {
       renderSidebar();
       if (Object.keys(allChats).length > 0) {
-        // Charge la dernière conversation modifiée
+        // Charge la discussion la plus récente
         const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
         loadChat(sortedIds[0]);
       } else {
@@ -78,11 +78,31 @@
       sortedIds.forEach(id => {
         const item = document.createElement('div');
         item.className = `history-item ${id === currentChatId ? 'active' : ''}`;
-        item.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
-        item.onclick = () => {
+        
+        // Conteneur texte cliquable
+        const textSpan = document.createElement('span');
+        textSpan.className = 'history-item-text';
+        textSpan.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
+        textSpan.onclick = () => {
           loadChat(id);
-          if(window.innerWidth <= 768) toggleSidebar(); // Ferme le volet sur mobile après sélection
+          // Sur mobile, ferme automatiquement le volet après sélection
+          if(window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.remove('open');
+          }
         };
+
+        // Bouton de suppression (Poubelle)
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-chat-btn';
+        deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
+        deleteBtn.title = "Supprimer cette discussion";
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation(); // Empêche de charger le chat au clic sur la poubelle
+          deleteChat(id);
+        };
+
+        item.appendChild(textSpan);
+        item.appendChild(deleteBtn);
         listContainer.appendChild(item);
       });
     }
@@ -106,7 +126,7 @@
       chatContainer.innerHTML = '';
       
       allChats[id].history.forEach(msg => {
-        // Ne pas ré-afficher à l'écran les blocs d'images bruts ou le texte long des fichiers
+        // Filtre d'affichage visuel pour l'historique
         if (msg.role === 'user' && Array.isArray(msg.content)) {
           displayMessage('user', msg.content[0].text, true);
         } else if (msg.role === 'user' && msg.content.includes("Voici le contenu du fichier joint")) {
@@ -119,12 +139,41 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
+    // SUPPRIMER UNE CONVERSATION
+    function deleteChat(id) {
+      if (confirm("Voulez-vous vraiment supprimer cette discussion ?")) {
+        delete allChats[id];
+        saveToStorage();
+        
+        // Si on supprime la discussion active
+        if (currentChatId === id) {
+          const remainingIds = Object.keys(allChats);
+          if (remainingIds.length > 0) {
+            const nextChatId = remainingIds.sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt)[0];
+            loadChat(nextChatId);
+          } else {
+            startNewChat();
+          }
+        } else {
+          renderSidebar();
+        }
+      }
+    }
+
     function saveToStorage() {
       localStorage.setItem('axiom_chats', JSON.stringify(allChats));
     }
 
+    // OUVERTURE / FERMETURE DE LA SIDEBAR (PC & MOBILE)
     function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('open');
+      const sidebar = document.getElementById('sidebar');
+      if (window.innerWidth <= 768) {
+        // Logique Mobile (Glissement par dessus)
+        sidebar.classList.toggle('open');
+      } else {
+        // Logique Ordinateur (Rétraction latérale complète)
+        sidebar.classList.toggle('closed');
+      }
     }
 
     function handleFileSelect(input) {
@@ -212,19 +261,17 @@
       
       if (!messageText && !selectedFile) return;
 
-      // Renommer le titre du chat si c'est le tout premier vrai message
+      // Renommer le titre du chat si c'est la première interaction
       if (allChats[currentChatId].title === "Nouvelle discussion") {
         allChats[currentChatId].title = messageText ? messageText.substring(0, 24) + "..." : "Analyse de fichier";
       }
 
-      // Affichage immédiat à l'écran
       let viewText = messageText;
       if (selectedFile) {
         viewText = (selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `) + viewText;
       }
       displayMessage('user', viewText);
 
-      // Structure d'envoi pour l'historique API
       let contentStructure;
       if (selectedFile) {
         if (selectedFile.type.startsWith("image/")) {
@@ -239,7 +286,6 @@
         contentStructure = messageText;
       }
 
-      // Enregistrement dans l'historique
       allChats[currentChatId].history.push({ role: "user", content: contentStructure });
       allChats[currentChatId].updatedAt = Date.now();
       saveToStorage();
@@ -248,7 +294,6 @@
       clearFile();
       input.value = '';
 
-      // Bulle de chargement
       const loadingMessage = document.createElement('div');
       loadingMessage.className = 'message bot-message loading-message';
       loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Axiom réfléchit...`;
