@@ -46,21 +46,32 @@ body {
   gap: 1rem;
   flex-shrink: 0;
   z-index: 20;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s ease, width 0.3s ease;
   
-  /* Nouveau design flottant avec coins arrondis et espaces */
-  margin: 15px 0 15px 15px;
+  /* Transitions fluides pour toutes les propriétés réductibles */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              margin 0.3s ease, 
+              width 0.3s ease, 
+              padding 0.3s ease,
+              opacity 0.2s ease;
+  
+  /* Empêche les éléments internes (boutons, titres) de déborder lors de la fermeture */
+  overflow: hidden; 
+  
+  /* Design haut de gamme : Flottant avec espaces et coins arrondis */
+  margin: 15px 15px 15px 15px;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(94, 48, 35, 0.08);
 }
 
-/* Quand la barre latérale est fermée (PC et Mobile) */
+/* Quand la barre latérale est fermée (Ordinateur) */
 #sidebar.closed {
-  transform: translateX(-115%);
-  margin-left: 0;
+  transform: translateX(-120%);
   width: 0;
   padding: 0;
+  margin-left: 0;
+  margin-right: 0;
   border: none;
+  opacity: 0;
 }
 
 /* Bouton Nouveau Chat */
@@ -81,7 +92,6 @@ body {
   box-shadow: 0 4px 10px rgba(200, 85, 61, 0.2);
   transition: all 0.2s ease;
   white-space: nowrap;
-  overflow: hidden;
 }
 
 #new-chat-btn:hover {
@@ -107,7 +117,7 @@ body {
   font-size: 0.9rem;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Aligne le titre à gauche et la corbeille à droite */
+  justify-content: space-between;
   gap: 10px;
   border: 1px solid transparent;
   transition: all 0.2s ease;
@@ -184,22 +194,25 @@ header h1 {
   font-weight: 700;
 }
 
-/* Bouton Menu (PC et Mobile) */
+/* Bouton Menu Burger */
 #menu-toggle {
-  display: block; /* Toujours visible désormais */
+  display: block; 
   position: absolute;
   left: 20px;
+  top: 50%;
+  transform: translateY(-50%); /* Centrage vertical absolu parfait */
   background: none;
   border: none;
   color: var(--success);
   font-size: 1.4rem;
   cursor: pointer;
   padding: 5px;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  z-index: 15;
 }
 
 #menu-toggle:active {
-  transform: scale(0.9);
+  transform: translateY(-50%) scale(0.9);
 }
 
 /* ===== CONTAINER DE DISCUSSION ===== */
@@ -337,29 +350,32 @@ header h1 {
   border: none;
 }
 
-/* ===== DESIGN POUR ÉCRANS MOBILES ===== */
+/* ===== RESPONSIVE SMARTPHONES (ÉCRANS INFERIEURS A 768PX) ===== */
 @media (max-width: 768px) {
   #sidebar {
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
-    margin: 10px; /* Moins de marge sur mobile pour optimiser l'espace */
-    height: calc(100% - 20px);
-    transform: translateX(-115%);
+    margin: 15px;
+    height: calc(100% - 30px);
+    transform: translateX(-120%);
     width: 260px;
+    opacity: 1;
   }
 
+  /* Version ouverte sur mobile (glisse au-dessus du chat) */
   #sidebar.open {
     transform: translateX(0) !important;
   }
 
-  /* Sur mobile, la fermeture complète utilise l'ancienne logique */
+  /* Version fermée sur mobile */
   #sidebar.closed {
-    transform: translateX(-115%);
+    transform: translateX(-120%);
     width: 260px;
     padding: 1rem;
-    margin: 10px;
+    margin: 15px;
+    opacity: 1;
   }
 
   .copy-btn { opacity: 0.5; }
