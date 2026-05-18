@@ -11,29 +11,28 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors());
-// IMPORTANT : On laisse la limite à 50mb pour accepter les gros volumes de texte/images sans planter
 app.use(express.json({ limit: "50mb" }));
 app.use(express.static("public"));
 
 app.post("/chat", async (req, res) => {
   try {
-    const { history } = req.body; // <-- On récupère tout l'historique de discussion envoyé par index.html
+    const { history } = req.body;
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey || apiKey.trim() === "") {
-      console.error("[ERREUR] La clé OPENROUTER_API_KEY est introuvable ou vide.");
-      return res.json({ 
-        reply: "Erreur de configuration : La clé API n'a pas pu être chargée par le serveur. Vérifiez votre configuration Render." 
-      });
+      return res.status(500).json({ reply: "Erreur de configuration : Clé API introuvable." });
     }
 
     if (!history || !Array.isArray(history)) {
-      return res.json({ 
-        reply: "Erreur : L'historique de discussion transmis est invalide ou absent." 
-      });
+      return res.status(400).json({ reply: "Erreur : L'historique de discussion est invalide." });
     }
 
-    // Appel à l'API d'OpenRouter
+    // Configurer la réponse HTTP pour le Streaming (SSE)
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    // Appel à OpenRouter avec l'option "stream: true"
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -43,53 +42,61 @@ app.post("/chat", async (req, res) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          // Choix automatique parmi les modèles gratuits d'OpenRouter
           model: "openrouter/free", 
-          messages: history // <-- On injecte tout le tableau pour que l'IA se souvienne du contexte !
+          messages: history,
+          stream: true // <-- L'option magique pour activer le streaming d'OpenRouter
         })
       }
     );
 
-    // Récupération du texte brut pour éviter un crash si la réponse n'est pas du JSON
-    const responseText = await response.text();
-    let data;
-    
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error("Impossible de parser la réponse en JSON. Reçu :", responseText);
-      return res.json({ 
-        reply: "Désolé, l'API OpenRouter a renvoyé une réponse illisible." 
-      });
-    }
-    
-    // Si la structure de réponse d'OpenRouter est valide, on renvoie le message
-    if (data && data.choices && data.choices[0] && data.choices[0].message) {
-      return res.json({ 
-        reply: data.choices[0].message.content 
-      });
-    } 
-    
-    // Si OpenRouter nous renvoie une erreur explicite
-    if (data && data.error) {
-      return res.json({ 
-        reply: `Erreur API OpenRouter : ${data.error.message || JSON.stringify(data.error)}` 
-      });
+    // Lecture du flux de données provenant d'OpenRouter
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      
+      // On garde la dernière ligne incomplète dans le buffer
+      buffer = lines.pop(); 
+
+      for (const line of lines) {
+        const cleanedLine = line.trim();
+        if (!cleanedLine) continue;
+        if (cleanedLine === "data: [DONE]") {
+          res.write("data: [DONE]\n\n");
+          continue;
+        }
+
+        if (cleanedLine.startsWith("data: ")) {
+          try {
+            const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
+            const content = parsed.choices?.[0]?.delta?.content || "";
+            if (content) {
+              // Envoi direct du morceau de texte à index.html
+              res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            }
+          } catch (e) {
+            // Ligne ignorée si ce n'est pas du JSON valide (métadonnées d'OpenRouter)
+          }
+        }
+      }
     }
 
-    return res.json({ 
-      reply: "L'API a répondu, mais n'a retourné aucun message." 
-    });
+    res.end();
 
   } catch (error) {
     console.error("Erreur critique sur le serveur :", error);
-    return res.status(500).json({ 
-      error: "Erreur serveur interne" 
-    });
+    // En cas d'erreur au milieu du stream, on ferme proprement le flux
+    res.write(`data: ${JSON.stringify({ error: "Erreur serveur interne" })}\n\n`);
+    res.end();
   }
 });
 
-// Lancement du serveur sur le port fourni par Render ou 3000 par défaut
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur le port ${PORT}`);
