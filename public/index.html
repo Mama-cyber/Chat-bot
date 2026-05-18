@@ -82,6 +82,7 @@
       }
     };
 
+    // Fermeture automatique au clic à l'extérieur sur mobile
     document.addEventListener('click', function(event) {
       if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
@@ -190,9 +191,12 @@
     function toggleSidebar(event) {
       if(event) event.stopPropagation();
       const sidebar = document.getElementById('sidebar');
+      
       if (window.innerWidth <= 768) {
+        // Sur mobile, on bascule uniquement la classe 'open'
         sidebar.classList.toggle('open');
       } else {
+        // Sur ordinateur, on bascule la classe 'closed'
         sidebar.classList.toggle('closed');
       }
     }
@@ -300,7 +304,8 @@
 
       isGenerating = true;
       buttonIcon.className = "fas fa-stop";
-      sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))"; // Reste de la même couleur
+      // Conserve le dégradé d'origine identique au bouton d'envoi
+      sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))"; 
 
       currentAbortController = new AbortController();
       const { signal } = currentAbortController;
