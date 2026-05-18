@@ -8,7 +8,7 @@
   --danger: #D65A6F;      /* Rose rouge chaleureux */
   --text: #B55239;        /* Brun rosé chaud */
   --success: #E9C46A;     /* Safran doux */
-  --sidebar-bg: #fadcc5;  /* Fond de la barre latérale */
+  --sidebar-bg: #fadcc5;  /* Fond de la barre latérale sur mobile uniquement */
 }
 
 /* ===== RESET ET BASE ===== */
@@ -33,34 +33,30 @@ body {
   display: flex;
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
-/* ===== BARRE LATÉRALE FLOTTANTE ET RÉTRACTABLE ===== */
+/* ===== BARRE LATÉRALE TRANS-PARENTE (SUR PC) ===== */
 #sidebar {
   width: 280px;
-  background-color: var(--sidebar-bg);
-  border: 1px solid rgba(224, 122, 95, 0.25);
+  background-color: transparent; /* Pas de fond sur PC pour éviter les délimitations */
+  border: none;                  /* Pas de bordure sur PC */
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 1rem 0.5rem 1rem 1rem;
   gap: 1rem;
   flex-shrink: 0;
   z-index: 20;
   
-  /* Transitions fluides pour toutes les propriétés réductibles */
+  /* Transitions fluides */
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               margin 0.3s ease, 
               width 0.3s ease, 
               padding 0.3s ease,
               opacity 0.2s ease;
   
-  /* Empêche les éléments internes (boutons, titres) de déborder lors de la fermeture */
   overflow: hidden; 
-  
-  /* Design haut de gamme : Flottant avec espaces et coins arrondis */
-  margin: 15px 15px 15px 15px;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(94, 48, 35, 0.08);
+  margin: 15px 0 15px 15px;
 }
 
 /* Quand la barre latérale est fermée (Ordinateur) */
@@ -70,7 +66,6 @@ body {
   padding: 0;
   margin-left: 0;
   margin-right: 0;
-  border: none;
   opacity: 0;
 }
 
@@ -89,14 +84,14 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 10px rgba(200, 85, 61, 0.2);
+  box-shadow: 0 4px 10px rgba(200, 85, 61, 0.15);
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 #new-chat-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(200, 85, 61, 0.3);
+  box-shadow: 0 6px 14px rgba(200, 85, 61, 0.25);
 }
 
 /* Liste des anciens chats */
@@ -111,7 +106,7 @@ body {
 /* Élément de l'historique */
 .history-item {
   padding: 0.7rem 0.8rem;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.4);
   border-radius: 10px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -135,12 +130,14 @@ body {
 
 .history-item:hover, .history-item.active {
   background-color: white;
-  border-color: var(--primary);
+  border-color: rgba(231, 111, 81, 0.4);
   color: var(--dark);
 }
 
 .history-item.active {
   font-weight: 500;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(94, 48, 35, 0.04);
 }
 
 /* Bouton de suppression (Poubelle) */
@@ -200,7 +197,7 @@ header h1 {
   position: absolute;
   left: 20px;
   top: 50%;
-  transform: translateY(-50%); /* Centrage vertical absolu parfait */
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: var(--success);
@@ -350,7 +347,7 @@ header h1 {
   border: none;
 }
 
-/* ===== RESPONSIVE SMARTPHONES (ÉCRANS INFERIEURS A 768PX) ===== */
+/* ===== RESPONSIVE SMARTPHONES ===== */
 @media (max-width: 768px) {
   #sidebar {
     position: absolute;
@@ -362,20 +359,28 @@ header h1 {
     transform: translateX(-120%);
     width: 260px;
     opacity: 1;
+    
+    /* On ajoute une couleur de fond et une bordure uniquement sur mobile pour la lisibilité */
+    background-color: var(--sidebar-bg);
+    border: 1px solid rgba(224, 122, 95, 0.25);
+    padding: 1rem;
+    box-shadow: 0 4px 25px rgba(94, 48, 35, 0.2);
   }
 
-  /* Version ouverte sur mobile (glisse au-dessus du chat) */
   #sidebar.open {
     transform: translateX(0) !important;
   }
 
-  /* Version fermée sur mobile */
   #sidebar.closed {
     transform: translateX(-120%);
     width: 260px;
     padding: 1rem;
     margin: 15px;
     opacity: 1;
+  }
+
+  .history-item {
+    background-color: rgba(255, 255, 255, 0.5);
   }
 
   .copy-btn { opacity: 0.5; }
