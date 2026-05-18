@@ -28,7 +28,6 @@ body {
   overflow: hidden;
 }
 
-/* ===== APP LAYOUT ===== */
 #app-container {
   display: flex;
   width: 100%;
@@ -39,26 +38,30 @@ body {
 #sidebar {
   width: 280px;
   background-color: var(--sidebar-bg);
-  border: 1px solid rgba(224, 122, 95, 0.2);
+  border: 1px solid rgba(224, 122, 95, 0.25);
   display: flex;
   flex-direction: column;
   padding: 1rem;
   gap: 1rem;
   flex-shrink: 0;
   z-index: 20;
-  transition: transform 0.3s ease, margin 0.3s ease, width 0.3s ease;
-  overflow-y: auto;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s ease, width 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+  overflow: hidden; 
+  margin: 15px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(94, 48, 35, 0.08);
 }
 
-/* Quand la barre latérale est fermée sur PC */
 #sidebar.closed {
-  transform: translateX(-100%);
+  transform: translateX(-120%);
   width: 0;
   padding: 0;
+  margin-left: 0;
+  margin-right: 0;
   border: none;
+  opacity: 0;
 }
 
-/* Bouton Nouveau Chat */
 #new-chat-btn {
   width: 100%;
   padding: 0.8rem;
@@ -73,16 +76,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 10px rgba(200, 85, 61, 0.15);
+  box-shadow: 0 4px 10px rgba(200, 85, 61, 0.2);
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-#new-chat-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(200, 85, 61, 0.25);
-}
-
-/* Liste des anciens chats */
 #history-list {
   flex: 1;
   overflow-y: auto;
@@ -91,10 +89,9 @@ body {
   gap: 0.5rem;
 }
 
-/* Élément de l'historique */
 .history-item {
   padding: 0.7rem 0.8rem;
-  background-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.5);
   border-radius: 10px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -102,7 +99,6 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
@@ -118,15 +114,10 @@ body {
 
 .history-item:hover, .history-item.active {
   background-color: white;
-  border-color: rgba(231, 111, 81, 0.4);
+  border-color: var(--primary);
   color: var(--dark);
 }
 
-.history-item.active {
-  font-weight: 500;
-}
-
-/* Bouton de suppression (Poubelle) */
 .delete-chat-btn {
   background: none;
   border: none;
@@ -134,50 +125,42 @@ body {
   opacity: 0.3;
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 5px;
-  transition: all 0.2s ease;
 }
 
-.history-item:hover .delete-chat-btn {
-  opacity: 0.7;
-}
+.history-item:hover .delete-chat-btn { opacity: 0.7; }
+.delete-chat-btn:hover { color: var(--danger) !important; opacity: 1 !important; background-color: rgba(214, 90, 111, 0.1); }
 
-.delete-chat-btn:hover {
-  color: var(--danger) !important;
-  opacity: 1 !important;
-  background-color: rgba(214, 90, 111, 0.1);
-}
-
-/* ===== ZONE PRINCIPALE DE DISCUSSION ===== */
+/* ===== ZONE DE DISCUSSION ===== */
 #main-chat {
   flex: 1;
   display: flex;
   flex-direction: column;
   background-color: var(--light);
   height: 100%;
+  min-width: 0;
+  position: relative;
 }
 
 header {
   background: linear-gradient(135deg, var(--dark), var(--primary));
   padding: 1rem;
-  text-align: center;
   box-shadow: 0 4px 20px rgba(94, 48, 35, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 10;
 }
 
 header h1 {
   font-family: 'Playfair Display', serif;
   font-size: 1.8rem;
-  color: var(--success);
+  color: var(--success) !important;
   font-weight: 700;
 }
 
-/* Bouton Menu Burger */
 #menu-toggle {
-  display: block;
+  display: block; 
   position: absolute;
   left: 20px;
   top: 50%;
@@ -187,11 +170,9 @@ header h1 {
   color: var(--success);
   font-size: 1.4rem;
   cursor: pointer;
-  padding: 5px;
-  transition: all 0.2s ease;
+  z-index: 30;
 }
 
-/* ===== CONTAINER DE DISCUSSION ===== */
 #chat-container {
   flex: 1;
   overflow-y: auto;
@@ -204,7 +185,7 @@ header h1 {
   gap: 1.2rem;
 }
 
-/* ===== BULLES DE MESSAGES ===== */
+/* ===== BULLES DES MESSAGES ===== */
 .message {
   max-width: 85%;
   padding: 0.8rem 1.2rem;
@@ -227,13 +208,10 @@ header h1 {
   opacity: 0;
   cursor: pointer;
   font-size: 0.8rem;
-  padding: 4px;
 }
 
 .message:hover .copy-btn { opacity: 0.6; }
-.copy-btn:hover { opacity: 1 !important; }
 .copy-btn.copied { color: var(--success) !important; opacity: 1 !important; }
-.message-text-content { padding-right: 20px; }
 
 .user-message {
   background: linear-gradient(135deg, var(--primary), #C75B39);
@@ -248,39 +226,62 @@ header h1 {
   align-self: flex-start;
   border: 1px solid rgba(224, 122, 95, 0.15);
   border-bottom-left-radius: 5px;
+  width: 100%;
 }
 
-.bot-message-content { margin-top: 5px; }
 .bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
 .bot-message-content p { margin-bottom: 6px; }
-.bot-message-content p:last-child { margin-bottom: 0; }
 
-.loading-message { background-color: rgba(255, 255, 255, 0.6); color: var(--primary); font-style: italic; }
-.error-message { background-color: #FCE8E0; color: var(--danger); align-self: center; }
-
-/* ===== BLOCS DE CODE (MARKDOWN RECONNU DANS LES REPONSES) ===== */
+/* ===== BLOCS DE CODE DESIGN SNAPCODE (CORRIGÉ POUR RETOUR À LA LIGNE) ===== */
 .code-container {
-  background-color: #1e1e1e !important;
+  position: relative;
+  background: #1e1e1e !important;
   border-radius: 10px;
-  margin: 0.8rem 0;
-  border: 1px solid #333;
+  margin: 1.2rem 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
 }
 
 .code-header {
-  background-color: #2d2d2d;
-  padding: 0.5rem 1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #3c3c3c;
-  font-size: 0.8rem;
-  color: #aaa;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background-color: #252526;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-.code-container pre { margin: 0 !important; padding: 1.2rem 1rem !important; background: transparent !important; overflow-x: auto; }
-.code-container code { font-family: 'Consolas', monospace !important; font-size: 0.9rem !important; color: #d4d4d4; }
+.code-buttons { display: flex; gap: 6px; }
+.code-dot { width: 12px; height: 12px; border-radius: 50%; }
+.code-dot.red { background-color: #ff5f56; }
+.code-dot.yellow { background-color: #ffbd2e; }
+.code-dot.green { background-color: #27c93f; }
+
+.code-lang {
+  font-size: 0.75rem;
+  color: #858585;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.code-container pre { 
+  margin: 0 !important; 
+  padding: 1.2rem 1rem !important; 
+  background: transparent !important; 
+  overflow-x: auto;
+  white-space: pre-wrap;       /* Force le code à passer à la ligne */
+  word-wrap: break-word;       /* Coupe les mots ultra longs si besoin */
+  word-break: break-word;
+}
+
+.code-container code { 
+  font-family: 'Consolas', monospace !important; 
+  font-size: 0.9rem !important; 
+  color: #d4d4d4; 
+  white-space: pre-wrap;       /* Assure la compatibilité sur l'élément code */
+}
 
 /* ===== BARRE DE SAISIE ===== */
 #input-area {
@@ -290,11 +291,11 @@ header h1 {
   width: 100%;
 }
 
-/* ZONE D'APERÇU SÉCURISÉE PAR DEFAULT */
+/* ZONE D'APERÇU MASQUÉE PAR DÉFAUT */
 #preview-container {
   max-width: 800px;
   margin: 0 auto 0.5rem auto;
-  display: none; /* Le JS passera en 'flex' uniquement si un fichier est chargé */
+  display: none !important; 
   align-items: center;
   gap: 10px;
   background: #FDF0E6;
@@ -313,18 +314,25 @@ header h1 {
   margin: 0 auto;
   display: flex;
   gap: 0.6rem;
-  align-items: center;
+  align-items: flex-end; /* Aligne les boutons en bas lorsque le champ s'agrandit */
 }
 
+/* CHAMP TEXTAREA EXTENSIBLE DESIGN CORRIGÉ */
 #user-input {
   flex: 1;
   padding: 0.7rem 1.1rem;
   border: 1px solid var(--primary);
-  border-radius: 25px;
+  border-radius: 20px;
   outline: none;
   min-width: 0;
   background-color: rgba(253, 245, 230, 0.6);
   font-size: 0.95rem;
+  font-family: 'Poppins', sans-serif;
+  resize: none;                /* Désactive la poignée manuelle de redimensionnement */
+  height: 42px;                /* Hauteur de départ */
+  max-height: 120px;           /* Limite la hauteur à environ 4 lignes maximum */
+  line-height: 1.4;
+  overflow-y: auto;            /* Ajoute un scroll interne discret si > 4 lignes */
 }
 
 .file-upload-btn, #send-button {
@@ -336,39 +344,16 @@ header h1 {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  margin-bottom: 1px;          /* Ajustement optique avec le textarea arrondi */
 }
 
-.file-upload-btn {
-  background-color: rgba(253, 245, 230, 0.6);
-  border: 1px solid var(--primary);
-  color: var(--text);
-}
+.file-upload-btn { background-color: rgba(253, 245, 230, 0.6); border: 1px solid var(--primary); color: var(--text); }
+#send-button { background: linear-gradient(135deg, var(--secondary), var(--accent)); color: var(--dark); border: none; }
 
-#send-button {
-  background: linear-gradient(135deg, var(--secondary), var(--accent));
-  color: var(--dark);
-  border: none;
-  transition: background 0.2s ease;
-}
-
-/* ===== RESPONSIVE SMARTPHONES ===== */
+/* RESPONSIVE */
 @media (max-width: 768px) {
-  #sidebar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    height: 100%;
-    transform: translateX(-100%);
-    box-shadow: 5px 0 15px rgba(0,0,0,0.1);
-  }
-
-  #sidebar.open {
-    transform: translateX(0);
-  }
+  #sidebar { position: absolute; left: 0; top: 0; bottom: 0; margin: 15px; height: calc(100% - 30px); transform: translateX(-120%); width: 260px; }
+  #sidebar.open { transform: translateX(0) !important; }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
