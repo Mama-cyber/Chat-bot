@@ -13,8 +13,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 </head>
 <body>
 
@@ -60,7 +59,7 @@
     let allChats = JSON.parse(localStorage.getItem('axiom_chats')) || {};
     let currentChatId = null;
 
-    // CONFIGURATION DU RENDU DES BLOCS DE CODE (STYLE SNAPCODE / VS CODE)
+    // CONFIGURATION DE MARKED POUR EMBALLER LE CODE DANS UN COMPOSANT SNAPCODE
     const renderer = new marked.Renderer();
     renderer.code = function(code, infostring) {
       const lang = infostring || 'txt';
@@ -266,7 +265,7 @@
         msgDiv.querySelector('.render-zone').textContent = text;
       } else {
         msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
-        Prism.highlightAllUnder(msgDiv); // FORCE LE RENDU DES COULEURS DU CODE
+        Prism.highlightAllUnder(msgDiv);
       }
       
       msgDiv.querySelector('.copy-btn').onclick = function() { copyText(this, text); };
@@ -275,6 +274,7 @@
       return msgDiv;
     }
 
+    // FONCTION SENDMESSAGE RE-DÉVELOPPÉE POUR LE STREAMING DIRECT SANS ERREUR RESEAU
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
@@ -308,11 +308,20 @@
       clearFile();
       input.value = '';
 
-      const loadingMessage = document.createElement('div');
-      loadingMessage.className = 'message bot-message loading-message';
-      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Axiom réfléchit...`;
-      chatContainer.appendChild(loadingMessage);
+      // Création de la bulle bot qui va recevoir le flux textuel
+      const botMessage = document.createElement('div');
+      botMessage.className = 'message bot-message';
+      botMessage.innerHTML = `
+        <button class="copy-btn"><i class="fas fa-copy"></i></button>
+        <div class="message-text-content">
+          <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom écrit...</span>
+        </div>
+      `;
+      chatContainer.appendChild(botMessage);
       chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      const renderZone = botMessage.querySelector('.render-zone');
+      let fullResponseText = ""; 
 
       try {
         const response = await fetch("/chat", {
@@ -321,23 +330,68 @@
           body: JSON.stringify({ history: allChats[currentChatId].history })
         });
 
-        const data = await response.json();
-        chatContainer.removeChild(loadingMessage);
-
-        if (data.reply && data.reply.startsWith("Erreur")) {
-          const errDiv = displayMessage('error', data.reply);
-          errDiv.className = 'message error-message';
+        // Gestion Si le serveur répond en SSE (flux Streaming data: ...) ou en JSON direct
+        const contentType = response.headers.get("content-type");
+        
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          fullResponseText = data.reply || "";
+          renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+          Prism.highlightAllUnder(botMessage);
         } else {
-          displayMessage('assistant', data.reply);
-          allChats[currentChatId].history.push({ role: "assistant", content: data.reply });
-          allChats[currentChatId].updatedAt = Date.now();
-          saveToStorage();
+          // Mode Flux / Reader Textuel (Sécurisé pour le code HTML)
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop();
+
+            for (const line of lines) {
+              const cleanedLine = line.trim();
+              if (!cleanedLine || cleanedLine === "data: [DONE]") continue;
+
+              if (cleanedLine.startsWith("data: ")) {
+                try {
+                  const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
+                  if (parsed.content) {
+                    fullResponseText += parsed.content;
+                    renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+                    Prism.highlightAllUnder(botMessage);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                  }
+                } catch (e) {
+                  // Si le contenu n'est pas du JSON valide dans data, on prend la ligne brute
+                  fullResponseText += cleanedLine.replace(/^data: /, "");
+                  renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+                  Prism.highlightAllUnder(botMessage);
+                }
+              } else {
+                // Pour les serveurs qui envoient du texte brut directement ligne par ligne
+                fullResponseText += line + "\n";
+                renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+                Prism.highlightAllUnder(botMessage);
+              }
+            }
+          }
         }
 
       } catch (error) {
-        if (chatContainer.contains(loadingMessage)) chatContainer.removeChild(loadingMessage);
-        const errDiv = displayMessage('error', "Erreur réseau.");
-        errDiv.className = 'message error-message';
+        console.error(error);
+        renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux réseau.</span>`;
+        botMessage.className = 'message error-message';
+      } finally {
+        if (fullResponseText.trim() !== "") {
+          botMessage.querySelector('.copy-btn').onclick = function() { copyText(this, fullResponseText); };
+          allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
+          allChats[currentChatId].updatedAt = Date.now();
+          saveToStorage();
+        }
       }
     }
 
