@@ -44,19 +44,24 @@
           <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)">
 
           <input type="text" id="user-input" placeholder="Écrivez votre message...">
-          <button id="send-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+          
+          <button id="send-button" onclick="handleActionClick()"><i class="fas fa-paper-plane" id="button-icon"></i></button>
         </div>
       </div>
     </main>
 
   </div>
 
-  <script>
+  <script {contentFetchId="uploaded:index.html-e5758a03-7049-43c2-8414-938f36c535fb"}>
     let selectedFile = null;
     
     // STRUCTURE MULTI-CHATS
     let allChats = JSON.parse(localStorage.getItem('axiom_chats')) || {};
     let currentChatId = null;
+
+    // VARIABLES DE CONTRÔLE POUR LE STOP
+    let isGenerating = false; // Indique si l'IA est en train d'écrire
+    let currentAbortController = null; // Contiendra le signal d'interruption réseau
 
     window.onload = function() {
       renderSidebar();
@@ -96,6 +101,7 @@
         textSpan.className = 'history-item-text';
         textSpan.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
         textSpan.onclick = () => {
+          if (isGenerating) return; // Empêche de changer de chat pendant qu'on génère
           loadChat(id);
           if(window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.remove('open');
@@ -108,6 +114,7 @@
         deleteBtn.title = "Supprimer cette discussion";
         deleteBtn.onclick = (e) => {
           e.stopPropagation();
+          if (isGenerating) return;
           deleteChat(id);
         };
 
@@ -118,6 +125,7 @@
     }
 
     function startNewChat() {
+      if (isGenerating) return;
       currentChatId = 'chat_' + Date.now();
       allChats[currentChatId] = {
         title: "Nouvelle discussion",
@@ -259,13 +267,40 @@
       return msgDiv;
     }
 
-    // NOUVELLE LOGIQUE D'ENVOI ET DE LECTURE DU STREAM EN CONTINU
+    // FONCTION COMMUNE POUR LE BOUTON D'ACTION (ENVOYER OU STOP)
+    function handleActionClick() {
+      if (isGenerating) {
+        stopGeneration();
+      } else {
+        sendMessage();
+      }
+    }
+
+    // FONCTION DE DÉCLENCHEMENT DU STOP
+    function stopGeneration() {
+      if (currentAbortController) {
+        currentAbortController.abort(); // Interrompt la requête réseau Fetch immédiatement !
+      }
+    }
+
+    // LOGIQUE DE GÉNÉRATION ET DE FLUX MIS À JOUR AVEC SÉCURITÉ ABORT
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
       const messageText = input.value.trim();
+      const sendButton = document.getElementById('send-button');
+      const buttonIcon = document.getElementById('button-icon');
       
       if (!messageText && !selectedFile) return;
+
+      // 1. Passage de l'interface en mode "Génération en cours" (Le bouton devient un carré Stop)
+      isGenerating = true;
+      buttonIcon.className = "fas fa-stop";
+      sendButton.style.background = "linear-gradient(135deg, var(--danger), #c0392b)";
+
+      // Initialisation du contrôleur d'interruption
+      currentAbortController = new AbortController();
+      const { signal } = currentAbortController;
 
       if (allChats[currentChatId].title === "Nouvelle discussion") {
         allChats[currentChatId].title = messageText ? messageText.substring(0, 24) + "..." : "Analyse de fichier";
@@ -299,29 +334,30 @@
       clearFile();
       input.value = '';
 
-      // Création de la bulle du bot qui va accueillir les mots au fur et à mesure
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot-message';
       botMessage.innerHTML = `
         <button class="copy-btn"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">
-          <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> En attente...</span>
+          <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom se connecte...</span>
         </div>
       `;
       chatContainer.appendChild(botMessage);
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       const renderZone = botMessage.querySelector('.render-zone');
-      let fullResponseText = ""; // Accumulateur du texte reçu
+      let fullResponseText = ""; 
 
       try {
+        // On passe l'option { signal } au fetch pour le rendre interruptible
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history: allChats[currentChatId].history })
+          body: JSON.stringify({ history: allChats[currentChatId].history }),
+          signal: signal 
         });
 
-        if (!response.ok) throw new Error("Erreur serveur réseau");
+        if (!response.ok) throw new Error("Erreur serveur");
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
@@ -338,11 +374,7 @@
           for (const line of lines) {
             const cleanedLine = line.trim();
             if (!cleanedLine) continue;
-
-            if (cleanedLine === "data: [DONE]") {
-              // Fin du stream atteinte avec succès
-              continue;
-            }
+            if (cleanedLine === "data: [DONE]") continue;
 
             if (cleanedLine.startsWith("data: ")) {
               try {
@@ -351,41 +383,58 @@
                 if (parsed.error) {
                   renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ${parsed.error}</span>`;
                   botMessage.className = 'message error-message';
+                  finalizeGenerationState();
                   return;
                 }
 
                 if (parsed.content) {
                   fullResponseText += parsed.content;
-                  // On remplace le texte brut par du HTML converti depuis le Markdown en temps réel
                   renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
                   chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
-              } catch (e) {
-                // Erreur de parsing d'une ligne ignorée
-              }
+              } catch (e) {}
             }
           }
         }
 
-        // Configuration définitive du bouton de copie une fois le stream fini
-        botMessage.querySelector('.copy-btn').onclick = function() {
-          copyText(this, fullResponseText);
-        };
-
-        // Sauvegarde définitive de la réponse complète dans l'historique local
-        allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
-        allChats[currentChatId].updatedAt = Date.now();
-        saveToStorage();
-
       } catch (error) {
-        console.error("Erreur de flux :", error);
-        renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de connexion au flux en continu.</span>`;
-        botMessage.className = 'message error-message';
+        // DETECTION DU CLIC SUR LE BOUTON STOP
+        if (error.name === 'AbortError') {
+          console.log("Génération interrompue de force par l'utilisateur.");
+          // On ajoute une petite mention visuelle discrète à la fin
+          fullResponseText += " *[Réponse interrompue]*";
+          renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+        } else {
+          console.error("Erreur de flux :", error);
+          renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux.</span>`;
+          botMessage.className = 'message error-message';
+        }
+      } finally {
+        // Dans tous les cas (fin normale, erreur ou arrêt forcé), on enregistre l'état actuel
+        if (fullResponseText.trim() !== "") {
+          botMessage.querySelector('.copy-btn').onclick = function() {
+            copyText(this, fullResponseText);
+          };
+          allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
+          allChats[currentChatId].updatedAt = Date.now();
+          saveToStorage();
+        }
+        
+        // Remise à zéro du bouton
+        finalizeGenerationState();
       }
     }
 
+    // REMET LE BOUTON EN MODE "FLECHE D'ENVOI"
+    function finalizeGenerationState() {
+      isGenerating = false;
+      currentAbortController = null;
+      document.getElementById('button-icon').className = "fas fa-paper-plane";
+      document.getElementById('send-button').style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
+    }
+
     document.getElementById('user-input').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') sendMessage();
+      if (e.key === 'Enter') handleActionClick();
     });
   </script>
 </body>
