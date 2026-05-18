@@ -24,67 +24,81 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  /* Empêche les rebonds bizarres sur mobile */
+  height: 100dvh; 
   line-height: 1.6;
+  overflow: hidden;
 }
 
 /* ===== EN-TÊTE ===== */
 header {
   background: linear-gradient(135deg, var(--dark), var(--primary));
-  padding: 1.2rem;
+  padding: 1rem;
   text-align: center;
   box-shadow: 0 4px 20px rgba(94, 48, 35, 0.2);
+  z-index: 10;
 }
 
 header h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 2.2rem;
-  color: var(--success) !important; /* Un bel or chaleureux */
+  font-size: 1.8rem;
+  color: var(--success) !important;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15); /* Ombre discrète pour le faire ressortir */
+  gap: 10px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 /* ===== CONTAINER DE CHAT ===== */
 #chat-container {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem;
+  padding: 1rem;
   max-width: 800px;
   width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1rem;
+  /* Défilement fluide sur iOS */
+  -webkit-overflow-scrolling: touch; 
 }
 
 /* ===== MESSAGES ===== */
 .message {
-  max-width: 75%;
-  padding: 1rem 1.3rem;
+  max-width: 85%;
+  padding: 0.8rem 1.1rem;
   border-radius: 20px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   word-wrap: break-word;
-  animation: fadeIn 0.4s ease;
-  box-shadow: 0 2px 8px rgba(94, 48, 35, 0.08);
-  position: relative; /* Pour le bouton copier */
+  word-break: break-word;
+  animation: fadeIn 0.3s ease;
+  box-shadow: 0 2px 8px rgba(94, 48, 35, 0.06);
+  position: relative;
 }
 
-/* Bouton copier (caché par défaut) */
+/* Bouton copier */
 .copy-btn {
   position: absolute;
-  top: 8px;
-  right: 12px;
+  top: 6px;
+  right: 10px;
   background: none;
   border: none;
   color: inherit;
   opacity: 0;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   transition: opacity 0.2s ease, color 0.2s ease;
   padding: 4px;
+}
+
+/* Sur mobile, on laisse le bouton visible plutôt qu'au survol souris */
+@media (max-width: 768px) {
+  .copy-btn {
+    opacity: 0.5;
+  }
 }
 
 .message:hover .copy-btn {
@@ -100,12 +114,10 @@ header h1 {
   opacity: 1 !important;
 }
 
-/* Espacement pour éviter le chevauchement avec le bouton copier */
 .message-text-content {
-  padding-right: 15px;
+  padding-right: 20px;
 }
 
-/* Messages utilisateur (à droite) */
 .user-message {
   background: linear-gradient(135deg, var(--primary), #C75B39);
   color: white;
@@ -113,12 +125,12 @@ header h1 {
   border-bottom-right-radius: 5px;
 }
 
-/* Messages bot (à gauche) */
 .bot-message {
   background-color: white;
   color: var(--text);
   align-self: flex-start;
-  border: 1px solid rgba(224, 122, 95, 0.3);
+  border: 1px solid rgba(224, 122, 95, 0.2);
+  border-bottom-left-radius: 5px;
 }
 
 .bot-message-content {
@@ -127,38 +139,39 @@ header h1 {
 
 .bot-message-content ul,
 .bot-message-content ol {
-  margin-left: 20px;
-  padding-left: 5px;
+  margin-left: 18px;
+  padding-left: 2px;
 }
 
 .bot-message-content p {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .bot-message-content p:last-child {
   margin-bottom: 0;
 }
 
-/* Message de chargement */
 .loading-message {
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.6);
   color: var(--primary);
   font-style: italic;
 }
 
-/* Message d'erreur */
 .error-message {
   background-color: #FCE8E0;
   color: var(--danger);
   align-self: center;
+  max-width: 95%;
+  font-size: 0.9rem;
 }
 
 /* ===== ZONE DE SAISIE ===== */
 #input-area {
   background-color: white;
-  border-top: 1px solid rgba(224, 122, 95, 0.2);
+  border-top: 1px solid rgba(224, 122, 95, 0.15);
   box-shadow: 0 -2px 10px rgba(94, 48, 35, 0.05);
-  padding: 1rem 2rem;
+  padding: 0.8rem 1rem;
+  z-index: 10;
 }
 
 #preview-container {
@@ -168,14 +181,14 @@ header h1 {
   align-items: center;
   gap: 10px;
   background: #FDF0E6;
-  padding: 8px 15px;
+  padding: 6px 12px;
   border-radius: 10px;
   border: 1px solid var(--primary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 #preview-container img {
-  max-height: 40px;
+  max-height: 35px;
   border-radius: 5px;
 }
 
@@ -183,38 +196,42 @@ header h1 {
   color: var(--danger);
   cursor: pointer;
   margin-left: auto;
+  padding: 4px;
 }
 
 #input-container {
   max-width: 800px;
   margin: 0 auto;
   display: flex;
-  gap: 1rem;
+  gap: 0.6rem;
   align-items: center;
+  width: 100%;
 }
 
 #user-input {
   flex: 1;
-  padding: 0.8rem 1.2rem;
+  padding: 0.7rem 1.1rem;
   border: 1px solid var(--primary);
-  border-radius: 50px;
-  font-size: 1rem;
+  border-radius: 25px;
+  font-size: 0.95rem;
   outline: none;
-  background-color: rgba(253, 245, 230, 0.8);
+  background-color: rgba(253, 245, 230, 0.6);
+  min-width: 0; /* Important pour éviter que l'input ne casse la largeur flex */
 }
 
 .file-upload-btn {
-  background-color: rgba(253, 245, 230, 0.8);
+  background-color: rgba(253, 245, 230, 0.6);
   border: 1px solid var(--primary);
   color: var(--text);
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* Empêche le bouton de s'écraser */
 }
 
 .file-upload-btn:hover {
@@ -223,22 +240,57 @@ header h1 {
 }
 
 #send-button {
-  padding: 0.8rem 1.5rem;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, var(--secondary), var(--accent));
   color: var(--dark);
   border: none;
-  border-radius: 50px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  height: 45px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Empêche le bouton de s'écraser */
+  transition: transform 0.1s ease;
+}
+
+#send-button:active {
+  transform: scale(0.9);
+}
+
+/* ===== DESIGN RESPONSIVE POUR ÉCRANS MOINS DE 480PX (TÉLÉPHONES) ===== */
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  #chat-container {
+    padding: 0.8rem;
+    gap: 0.8rem;
+  }
+
+  .message {
+    max-width: 90%;
+    font-size: 0.9rem;
+    padding: 0.7rem 0.9rem;
+  }
+
+  #input-area {
+    padding: 0.6rem 0.6rem;
+  }
+  
+  #user-input {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.9rem;
+  }
 }
 
 /* ===== ANIMATIONS ===== */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
