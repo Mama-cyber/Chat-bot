@@ -91,7 +91,7 @@ body {
   gap: 0.5rem;
 }
 
-/* Élément de l'historique (avec la couleur de fond conservée) */
+/* Élément de l'historique */
 .history-item {
   padding: 0.7rem 0.8rem;
   background-color: rgba(255, 255, 255, 0.4);
@@ -228,12 +228,13 @@ header h1 {
   cursor: pointer;
   font-size: 0.8rem;
   padding: 4px;
+  z-index: 10;
 }
 
 .message:hover .copy-btn { opacity: 0.6; }
 .copy-btn:hover { opacity: 1 !important; }
 .copy-btn.copied { color: var(--success) !important; opacity: 1 !important; }
-.message-text-content { padding-right: 20px; }
+.message-text-content { padding-right: 20px; width: 100%; }
 
 .user-message {
   background: linear-gradient(135deg, var(--primary), #C75B39);
@@ -248,15 +249,83 @@ header h1 {
   align-self: flex-start;
   border: 1px solid rgba(224, 122, 95, 0.15);
   border-bottom-left-radius: 5px;
+  width: 100%;
 }
 
 .bot-message-content { margin-top: 5px; }
-.bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
-.bot-message-content p { margin-bottom: 6px; }
+.bot-message-content ul, .bot-message-content ol { margin-left: 18px; margin-bottom: 8px; }
+.bot-message-content p { margin-bottom: 8px; }
 .bot-message-content p:last-child { margin-bottom: 0; }
 
 .loading-message { background-color: rgba(255, 255, 255, 0.6); color: var(--primary); font-style: italic; }
 .error-message { background-color: #FCE8E0; color: var(--danger); align-self: center; }
+
+/* ===== BLOCS DE CODE SNAPCODE (STYLE VS CODE / MAC) ===== */
+.code-container {
+  position: relative;
+  background: #1e1e1e !important; /* Fond sombre VS Code */
+  border-radius: 10px;
+  margin: 1.2rem 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+}
+
+/* Barre supérieure macOS */
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background-color: #252526;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  user-select: none;
+}
+
+.code-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.code-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.code-dot.red { background-color: #ff5f56; }
+.code-dot.yellow { background-color: #ffbd2e; }
+.code-dot.green { background-color: #27c93f; }
+
+.code-lang {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  color: #858585;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Zone du texte de code */
+.code-container pre {
+  margin: 0 !important;
+  padding: 1.2rem 1rem !important;
+  background: transparent !important;
+  overflow-x: auto;
+}
+
+.code-container code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 0.9rem !important;
+  color: #d4d4d4; /* Couleur par défaut si non pris en compte par Prism */
+  text-shadow: none !important;
+}
+
+/* Targetting Prism backgrounds token reset */
+.code-container pre[class*="language-"],
+.code-container code[class*="language-"] {
+  background: transparent !important;
+}
 
 /* ===== ZONE DE SAISIE ===== */
 #input-area {
@@ -311,6 +380,7 @@ header h1 {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.2s ease-in-out;
 }
 
 .file-upload-btn {
