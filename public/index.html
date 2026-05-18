@@ -296,8 +296,7 @@
       // 1. Passage de l'interface en mode "Génération en cours" (Le bouton devient un carré Stop)
       isGenerating = true;
       buttonIcon.className = "fas fa-stop";
-      sendButton.style.background = "linear-gradient(135deg, var(--danger), #c0392b)";
-
+      sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
       // Initialisation du contrôleur d'interruption
       currentAbortController = new AbortController();
       const { signal } = currentAbortController;
