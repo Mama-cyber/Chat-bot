@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Axiom | Assistant IA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Axiom</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
@@ -18,9 +18,7 @@
 
   <div id="chat-container">
     <div class="message bot-message">
-      <button class="copy-btn" onclick="copyText(this, 'Bonjour ! Vous pouvez m\'envoyer un message, une image ou un fichier texte.')">
-        <i class="fas fa-copy"></i>
-      </button>
+      <button class="copy-btn" onclick="copyText(this, 'Bonjour ! Vous pouvez m\'envoyer un message, une image ou un fichier texte.')"><i class="fas fa-copy"></i></button>
       <div class="message-text-content">
         <i class="fas fa-robot me-1"></i> Bonjour, comment puis-je vous aider aujourd'hui ?
       </div>
@@ -39,18 +37,15 @@
       </label>
       <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)">
 
-      <input type="text" id="user-input" placeholder="Écrivez votre message ici...">
-      <button id="send-button" onclick="sendMessage()">
-        <i class="fas fa-paper-plane"></i> Envoyer
-      </button>
+      <input type="text" id="user-input" placeholder="Écrivez votre message...">
+      <button id="send-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
 
   <script>
     let selectedFile = null;
     
-    // ---- AJOUT DE LA MÉMOIRE ----
-    // Ce tableau va stocker toute la discussion en cours au format attendu par l'IA
+    // Historique global de discussion pour la mémoire de l'IA
     let conversationHistory = [
       { role: "assistant", content: "Bonjour, comment puis-je vous aider aujourd'hui ?" }
     ];
@@ -85,7 +80,7 @@
           }
 
           selectedFile.text = cleanText;
-          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name} (Prêt)</span>`;
+          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name}</span>`;
           previewContainer.style.display = "flex";
         };
         reader.readAsText(file);
@@ -107,7 +102,7 @@
           button.innerHTML = `<i class="fas fa-copy"></i>`;
         }, 2000);
       }).catch(err => {
-        console.error("Échec de la copie : ", err);
+        console.error("Erreur lors de la copie : ", err);
       });
     }
 
@@ -118,13 +113,11 @@
       
       if (!messageText && !selectedFile) return;
 
-      // Afficher le message utilisateur à l'écran
       const userMessage = document.createElement('div');
       userMessage.className = 'message user-message';
       
       let textForClipboard = messageText;
       let userHTML = `<i class="fas fa-user me-1"></i> `;
-      
       if (selectedFile) {
         const prefix = selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `;
         userHTML += prefix;
@@ -143,7 +136,7 @@
 
       chatContainer.appendChild(userMessage);
 
-      // --- STRUCTURATION DU MESSAGE POUR L'HISTORIQUE DE L'IA ---
+      // Structure d'envoi pour OpenRouter
       let contentStructure;
       if (selectedFile) {
         if (selectedFile.type.startsWith("image/")) {
@@ -158,29 +151,23 @@
         contentStructure = messageText;
       }
 
-      // On ajoute le message de l'utilisateur à notre mémoire locale
       conversationHistory.push({ role: "user", content: contentStructure });
 
-      const fileToSend = selectedFile;
       clearFile();
       input.value = '';
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
-      // Afficher le chargement
       const loadingMessage = document.createElement('div');
       loadingMessage.className = 'message bot-message loading-message';
-      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant réfléchit...`;
+      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> L'assistant analyse votre demande...`;
       chatContainer.appendChild(loadingMessage);
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       try {
-        // Envoi de TOUT l'historique au serveur
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            history: conversationHistory // <-- On envoie tout le tableau ici !
-          })
+          body: JSON.stringify({ history: conversationHistory })
         });
 
         const data = await response.json();
@@ -205,7 +192,7 @@
             copyText(this, data.reply);
           };
 
-          // On ajoute la réponse de l'IA à notre mémoire locale pour le prochain tour !
+          // On enregistre la réponse dans la mémoire
           conversationHistory.push({ role: "assistant", content: data.reply });
         }
         chatContainer.appendChild(botMessage);
@@ -214,7 +201,7 @@
         if (chatContainer.contains(loadingMessage)) chatContainer.removeChild(loadingMessage);
         const errorMessage = document.createElement('div');
         errorMessage.className = 'message error-message';
-        errorMessage.innerHTML = `<i class="fas fa-wifi me-1"></i> Erreur réseau.`;
+        errorMessage.innerHTML = `<i class="fas fa-wifi me-1"></i> Erreur réseau : Impossible d'analyser la demande.`;
         chatContainer.appendChild(errorMessage);
       }
 
