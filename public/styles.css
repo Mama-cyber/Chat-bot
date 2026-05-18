@@ -35,27 +35,43 @@ body {
   height: 100%;
 }
 
-/* ===== BARRE LATÉRALE ===== */
+/* ===== BARRE LATÉRALE FLOTTANTE ET RÉTRACTABLE ===== */
 #sidebar {
   width: 280px;
   background-color: var(--sidebar-bg);
-  border: 1px solid rgba(224, 122, 95, 0.2);
+  border: 1px solid rgba(224, 122, 95, 0.25);
   display: flex;
   flex-direction: column;
   padding: 1rem;
   gap: 1rem;
   flex-shrink: 0;
   z-index: 20;
-  transition: transform 0.3s ease, margin 0.3s ease, width 0.3s ease;
-  overflow-y: auto;
+  
+  /* Transitions fluides pour toutes les propriétés réductibles */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              margin 0.3s ease, 
+              width 0.3s ease, 
+              padding 0.3s ease,
+              opacity 0.2s ease;
+  
+  /* Empêche les éléments internes de déborder lors de la fermeture */
+  overflow: hidden; 
+  
+  /* Design haut de gamme : Flottant avec espaces et coins arrondis */
+  margin: 15px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(94, 48, 35, 0.08);
 }
 
-/* Quand la barre latérale est fermée sur PC */
+/* Quand la barre latérale est fermée (Ordinateur) */
 #sidebar.closed {
-  transform: translateX(-100%);
+  transform: translateX(-120%);
   width: 0;
   padding: 0;
+  margin-left: 0;
+  margin-right: 0;
   border: none;
+  opacity: 0;
 }
 
 /* Bouton Nouveau Chat */
@@ -73,13 +89,14 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 10px rgba(200, 85, 61, 0.15);
+  box-shadow: 0 4px 10px rgba(200, 85, 61, 0.2);
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 #new-chat-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(200, 85, 61, 0.25);
+  box-shadow: 0 6px 14px rgba(200, 85, 61, 0.3);
 }
 
 /* Liste des anciens chats */
@@ -94,7 +111,7 @@ body {
 /* Élément de l'historique */
 .history-item {
   padding: 0.7rem 0.8rem;
-  background-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.5);
   border-radius: 10px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -118,7 +135,7 @@ body {
 
 .history-item:hover, .history-item.active {
   background-color: white;
-  border-color: rgba(231, 111, 81, 0.4);
+  border-color: var(--primary);
   color: var(--dark);
 }
 
@@ -155,29 +172,32 @@ body {
   flex-direction: column;
   background-color: var(--light);
   height: 100%;
+  min-width: 0;
+  position: relative;
 }
 
 header {
   background: linear-gradient(135deg, var(--dark), var(--primary));
   padding: 1rem;
-  text-align: center;
   box-shadow: 0 4px 20px rgba(94, 48, 35, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 10;
 }
 
 header h1 {
   font-family: 'Playfair Display', serif;
   font-size: 1.8rem;
-  color: var(--success);
+  color: var(--success) !important;
   font-weight: 700;
+  margin: 0 auto;
 }
 
-/* Bouton Menu Burger */
+/* Bouton Menu Burger - CORRIGÉ : Z-index augmenté pour rester cliquable */
 #menu-toggle {
-  display: block;
+  display: block; 
   position: absolute;
   left: 20px;
   top: 50%;
@@ -189,6 +209,11 @@ header h1 {
   cursor: pointer;
   padding: 5px;
   transition: all 0.2s ease;
+  z-index: 30;
+}
+
+#menu-toggle:active {
+  transform: translateY(-50%) scale(0.9);
 }
 
 /* ===== CONTAINER DE DISCUSSION ===== */
@@ -202,6 +227,7 @@ header h1 {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===== BULLES DE MESSAGES ===== */
@@ -228,13 +254,12 @@ header h1 {
   cursor: pointer;
   font-size: 0.8rem;
   padding: 4px;
-  z-index: 10;
 }
 
 .message:hover .copy-btn { opacity: 0.6; }
 .copy-btn:hover { opacity: 1 !important; }
 .copy-btn.copied { color: var(--success) !important; opacity: 1 !important; }
-.message-text-content { padding-right: 20px; width: 100%; }
+.message-text-content { padding-right: 20px; }
 
 .user-message {
   background: linear-gradient(135deg, var(--primary), #C75B39);
@@ -253,8 +278,8 @@ header h1 {
 }
 
 .bot-message-content { margin-top: 5px; }
-.bot-message-content ul, .bot-message-content ol { margin-left: 18px; margin-bottom: 8px; }
-.bot-message-content p { margin-bottom: 8px; }
+.bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
+.bot-message-content p { margin-bottom: 6px; }
 .bot-message-content p:last-child { margin-bottom: 0; }
 
 .loading-message { background-color: rgba(255, 255, 255, 0.6); color: var(--primary); font-style: italic; }
@@ -263,7 +288,7 @@ header h1 {
 /* ===== BLOCS DE CODE SNAPCODE (STYLE VS CODE / MAC) ===== */
 .code-container {
   position: relative;
-  background: #1e1e1e !important; /* Fond sombre VS Code */
+  background: #1e1e1e !important;
   border-radius: 10px;
   margin: 1.2rem 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
@@ -272,7 +297,6 @@ header h1 {
   width: 100%;
 }
 
-/* Barre supérieure macOS */
 .code-header {
   display: flex;
   align-items: center;
@@ -306,7 +330,6 @@ header h1 {
   letter-spacing: 0.5px;
 }
 
-/* Zone du texte de code */
 .code-container pre {
   margin: 0 !important;
   padding: 1.2rem 1rem !important;
@@ -317,11 +340,10 @@ header h1 {
 .code-container code {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
   font-size: 0.9rem !important;
-  color: #d4d4d4; /* Couleur par défaut si non pris en compte par Prism */
+  color: #d4d4d4;
   text-shadow: none !important;
 }
 
-/* Targetting Prism backgrounds token reset */
 .code-container pre[class*="language-"],
 .code-container code[class*="language-"] {
   background: transparent !important;
@@ -333,6 +355,7 @@ header h1 {
   border-top: 1px solid rgba(224, 122, 95, 0.15);
   box-shadow: 0 -2px 10px rgba(94, 48, 35, 0.05);
   padding: 0.8rem 1rem;
+  width: 100%;
 }
 
 #preview-container {
@@ -353,13 +376,14 @@ header h1 {
 
 #input-container {
   max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   display: flex;
   gap: 0.6rem;
   align-items: center;
-  width: 100%;
 }
 
+/* CORRIGÉ : min-width: 0 empêche le champ d'écraser et pousser les boutons */
 #user-input {
   flex: 1;
   padding: 0.7rem 1.1rem;
@@ -368,9 +392,10 @@ header h1 {
   font-size: 0.95rem;
   outline: none;
   background-color: rgba(253, 245, 230, 0.6);
-  min-width: 0;
+  min-width: 0; 
 }
 
+/* CORRIGÉ : flex-shrink: 0 bloque la taille pour ne jamais déformer le bouton */
 .file-upload-btn, #send-button {
   width: 40px;
   height: 40px;
@@ -379,7 +404,7 @@ header h1 {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  flex-shrink: 0;
+  flex-shrink: 0; 
   transition: all 0.2s ease-in-out;
 }
 
@@ -402,14 +427,26 @@ header h1 {
     left: 0;
     top: 0;
     bottom: 0;
-    height: 100%;
-    transform: translateX(-100%);
-    box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+    margin: 15px;
+    height: calc(100% - 30px);
+    transform: translateX(-120%);
+    width: 260px;
+    opacity: 1;
   }
 
   #sidebar.open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
+
+  #sidebar.closed {
+    transform: translateX(-120%);
+    width: 260px;
+    padding: 1rem;
+    margin: 15px;
+    opacity: 1;
+  }
+
+  .copy-btn { opacity: 0.5; }
 }
 
 @keyframes fadeIn {
