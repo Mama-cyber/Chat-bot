@@ -23,7 +23,7 @@
 
     <main id="main-chat">
       <header>
-        <button id="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <button id="menu-toggle" onclick="toggleSidebar(event)"><i class="fas fa-bars"></i></button>
         <h1>Axiom</h1>
       </header>
 
@@ -57,17 +57,29 @@
     let allChats = JSON.parse(localStorage.getItem('axiom_chats')) || {};
     let currentChatId = null;
 
-    // Au chargement initial
     window.onload = function() {
       renderSidebar();
       if (Object.keys(allChats).length > 0) {
-        // Charge la discussion la plus récente
         const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
         loadChat(sortedIds[0]);
       } else {
         startNewChat();
       }
     };
+
+    // Fermeture automatique au clic à l'extérieur sur mobile
+    document.addEventListener('click', function(event) {
+      if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menu-toggle');
+        
+        if (sidebar.classList.contains('open') && 
+            !sidebar.contains(event.target) && 
+            !menuToggle.contains(event.target)) {
+          sidebar.classList.remove('open');
+        }
+      }
+    });
 
     function renderSidebar() {
       const listContainer = document.getElementById('history-list');
@@ -79,25 +91,22 @@
         const item = document.createElement('div');
         item.className = `history-item ${id === currentChatId ? 'active' : ''}`;
         
-        // Conteneur texte cliquable
         const textSpan = document.createElement('span');
         textSpan.className = 'history-item-text';
         textSpan.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
         textSpan.onclick = () => {
           loadChat(id);
-          // Sur mobile, ferme automatiquement le volet après sélection
           if(window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.remove('open');
           }
         };
 
-        // Bouton de suppression (Poubelle)
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-chat-btn';
         deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
         deleteBtn.title = "Supprimer cette discussion";
         deleteBtn.onclick = (e) => {
-          e.stopPropagation(); // Empêche de charger le chat au clic sur la poubelle
+          e.stopPropagation();
           deleteChat(id);
         };
 
@@ -126,7 +135,6 @@
       chatContainer.innerHTML = '';
       
       allChats[id].history.forEach(msg => {
-        // Filtre d'affichage visuel pour l'historique
         if (msg.role === 'user' && Array.isArray(msg.content)) {
           displayMessage('user', msg.content[0].text, true);
         } else if (msg.role === 'user' && msg.content.includes("Voici le contenu du fichier joint")) {
@@ -139,13 +147,11 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // SUPPRIMER UNE CONVERSATION
     function deleteChat(id) {
       if (confirm("Voulez-vous vraiment supprimer cette discussion ?")) {
         delete allChats[id];
         saveToStorage();
         
-        // Si on supprime la discussion active
         if (currentChatId === id) {
           const remainingIds = Object.keys(allChats);
           if (remainingIds.length > 0) {
@@ -164,14 +170,12 @@
       localStorage.setItem('axiom_chats', JSON.stringify(allChats));
     }
 
-    // OUVERTURE / FERMETURE DE LA SIDEBAR (PC & MOBILE)
-    function toggleSidebar() {
+    function toggleSidebar(event) {
+      if(event) event.stopPropagation();
       const sidebar = document.getElementById('sidebar');
       if (window.innerWidth <= 768) {
-        // Logique Mobile (Glissement par dessus)
         sidebar.classList.toggle('open');
       } else {
-        // Logique Ordinateur (Rétraction latérale complète)
         sidebar.classList.toggle('closed');
       }
     }
@@ -261,7 +265,6 @@
       
       if (!messageText && !selectedFile) return;
 
-      // Renommer le titre du chat si c'est la première interaction
       if (allChats[currentChatId].title === "Nouvelle discussion") {
         allChats[currentChatId].title = messageText ? messageText.substring(0, 24) + "..." : "Analyse de fichier";
       }
