@@ -451,17 +451,16 @@ header h1 {
     left: 0;
     top: 0;
     height: 100%;
-    margin-left: -280px; /* Masqué par défaut sur mobile */
+    margin-left: -280px; /* Masqué à gauche par défaut sur mobile */
     box-shadow: 5px 0 25px rgba(0,0,0,0.15);
-    transition: margin-left 0.3s ease; /* Animation fluide de glissement */
   }
   
-  /* Quand on ajoute la classe .open, elle glisse depuis la gauche */
+  /* Sur mobile, la classe open déploie le menu par-dessus */
   #sidebar.open {
     margin-left: 0 !important;
   }
   
-  /* De base, l'état closed (ou l'absence de .open) la maintient cachée */
+  /* Sur mobile, l'état closed par défaut n'interfère pas */
   #sidebar.closed {
     margin-left: -280px !important;
   }
