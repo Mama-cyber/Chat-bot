@@ -59,7 +59,7 @@
     let allChats = JSON.parse(localStorage.getItem('axiom_chats')) || {};
     let currentChatId = null;
 
-    // CONFIGURATION DE MARKED POUR EMBALLER LE CODE DANS UN COMPOSANT SNAPCODE
+    // CONFIGURATION PERSONNALISÉE DU RENDU DES BLOCS DE CODE SNAPCODE
     const renderer = new marked.Renderer();
     renderer.code = function(code, infostring) {
       const lang = infostring || 'txt';
@@ -274,7 +274,7 @@
       return msgDiv;
     }
 
-    // FONCTION SENDMESSAGE RE-DÉVELOPPÉE POUR LE STREAMING DIRECT SANS ERREUR RESEAU
+    // RE-DÉVELOPPEMENT POUR LIRE EN TOUTE SÉCURITÉ UN FLUX DE DONNÉES EN STREAMING (PAS D'ERREUR RESEAU)
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
@@ -308,13 +308,13 @@
       clearFile();
       input.value = '';
 
-      // Création de la bulle bot qui va recevoir le flux textuel
+      // Création de l'emplacement de la bulle bot
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot-message';
       botMessage.innerHTML = `
         <button class="copy-btn"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">
-          <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom écrit...</span>
+          <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom réfléchit...</span>
         </div>
       `;
       chatContainer.appendChild(botMessage);
@@ -330,16 +330,16 @@
           body: JSON.stringify({ history: allChats[currentChatId].history })
         });
 
-        // Gestion Si le serveur répond en SSE (flux Streaming data: ...) ou en JSON direct
         const contentType = response.headers.get("content-type");
         
+        // CORRECTION SÉCURITÉ FLUX : Si le backend répond par un bloc unique JSON complet
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
           fullResponseText = data.reply || "";
           renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
           Prism.highlightAllUnder(botMessage);
         } else {
-          // Mode Flux / Reader Textuel (Sécurisé pour le code HTML)
+          // CORRECTION SÉCURITÉ FLUX : Mode Streaming standard (Lit octet par octet de manière fluide)
           const reader = response.body.getReader();
           const decoder = new TextDecoder("utf-8");
           let buffer = "";
@@ -350,7 +350,7 @@
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n");
-            buffer = lines.pop();
+            buffer = lines.pop(); // Conserve la ligne incomplète dans le buffer pour le prochain tour
 
             for (const line of lines) {
               const cleanedLine = line.trim();
@@ -362,17 +362,18 @@
                   if (parsed.content) {
                     fullResponseText += parsed.content;
                     renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-                    Prism.highlightAllUnder(botMessage);
+                    Prism.highlightAllUnder(botMessage); // Coloration en direct
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                   }
                 } catch (e) {
-                  // Si le contenu n'est pas du JSON valide dans data, on prend la ligne brute
-                  fullResponseText += cleanedLine.replace(/^data: /, "");
+                  // Si 'data: ' contient directement du texte brut sans format JSON
+                  const rawToken = cleanedLine.replace(/^data: /, "");
+                  fullResponseText += rawToken;
                   renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
                   Prism.highlightAllUnder(botMessage);
                 }
               } else {
-                // Pour les serveurs qui envoient du texte brut directement ligne par ligne
+                // Pour les backends transmettant du texte brut ligne par ligne
                 fullResponseText += line + "\n";
                 renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
                 Prism.highlightAllUnder(botMessage);
@@ -382,8 +383,8 @@
         }
 
       } catch (error) {
-        console.error(error);
-        renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux réseau.</span>`;
+        console.error("Détails erreur flux :", error);
+        renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Une erreur de flux s'est produite lors de la génération.</span>`;
         botMessage.className = 'message error-message';
       } finally {
         if (fullResponseText.trim() !== "") {
