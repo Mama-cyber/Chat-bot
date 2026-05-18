@@ -4,13 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Axiom</title>
-  <link rel="icon" type="image/png" href="logo-Axiom.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-
-  <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
@@ -26,8 +24,7 @@
       <button id="new-chat-btn" onclick="startNewChat()">
         <i class="fas fa-plus"></i> Nouveau chat
       </button>
-      <div id="history-list">
-      </div>
+      <div id="history-list"></div>
     </aside>
 
     <main id="main-chat">
@@ -36,8 +33,7 @@
         <h1>Axiom</h1>
       </header>
 
-      <div id="chat-container">
-      </div>
+      <div id="chat-container"></div>
 
       <div id="input-area">
         <div id="preview-container">
@@ -52,7 +48,7 @@
           <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)">
 
           <input type="text" id="user-input" placeholder="Écrivez votre message...">
-          <button id="send-button" onclick="handleActionClick()"><i class="fas fa-paper-plane" id="button-icon"></i></button>
+          <button id="send-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </main>
@@ -61,16 +57,10 @@
 
   <script>
     let selectedFile = null;
-    
-    // STRUCTURE MULTI-CHATS
     let allChats = JSON.parse(localStorage.getItem('axiom_chats')) || {};
     let currentChatId = null;
 
-    // VARIABLES DE CONTRÔLE DE GÉNÉRATION (STREAMING)
-    let isGenerating = false; 
-    let currentAbortController = null; 
-
-    // CUSTOMISATION DE MARKED POUR LE RENDU SNAPCODE
+    // CONFIGURATION DU RENDU DES BLOCS DE CODE (STYLE SNAPCODE / VS CODE)
     const renderer = new marked.Renderer();
     renderer.code = function(code, infostring) {
       const lang = infostring || 'txt';
@@ -113,10 +103,7 @@
       if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
         const menuToggle = document.getElementById('menu-toggle');
-        
-        if (sidebar.classList.contains('open') && 
-            !sidebar.contains(event.target) && 
-            !menuToggle.contains(event.target)) {
+        if (sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
           sidebar.classList.remove('open');
         }
       }
@@ -125,7 +112,6 @@
     function renderSidebar() {
       const listContainer = document.getElementById('history-list');
       listContainer.innerHTML = '';
-      
       const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
       
       sortedIds.forEach(id => {
@@ -136,7 +122,6 @@
         textSpan.className = 'history-item-text';
         textSpan.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
         textSpan.onclick = () => {
-          if (isGenerating) return; 
           loadChat(id);
           if(window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.remove('open');
@@ -146,10 +131,8 @@
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-chat-btn';
         deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
-        deleteBtn.title = "Supprimer cette discussion";
         deleteBtn.onclick = (e) => {
           e.stopPropagation();
-          if (isGenerating) return;
           deleteChat(id);
         };
 
@@ -160,7 +143,6 @@
     }
 
     function startNewChat() {
-      if (isGenerating) return;
       currentChatId = 'chat_' + Date.now();
       allChats[currentChatId] = {
         title: "Nouvelle discussion",
@@ -174,7 +156,6 @@
     function loadChat(id) {
       currentChatId = id;
       renderSidebar();
-      
       const chatContainer = document.getElementById('chat-container');
       chatContainer.innerHTML = '';
       
@@ -195,12 +176,10 @@
       if (confirm("Voulez-vous vraiment supprimer cette discussion ?")) {
         delete allChats[id];
         saveToStorage();
-        
         if (currentChatId === id) {
           const remainingIds = Object.keys(allChats);
           if (remainingIds.length > 0) {
-            const nextChatId = remainingIds.sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt)[0];
-            loadChat(nextChatId);
+            loadChat(remainingIds.sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt)[0]);
           } else {
             startNewChat();
           }
@@ -227,7 +206,6 @@
     function handleFileSelect(input) {
       const file = input.files[0];
       if (!file) return;
-
       selectedFile = { name: file.name, type: file.type };
       const reader = new FileReader();
       const previewContainer = document.getElementById("preview-container");
@@ -242,17 +220,11 @@
         reader.readAsDataURL(file);
       } else {
         reader.onload = function(e) {
-          let rawText = e.target.result;
-          let cleanText = rawText.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-          cleanText = cleanText.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-          cleanText = cleanText.replace(/<[^>]+>/g, ' '); 
-          cleanText = cleanText.replace(/[^a-zA-Z0-9àâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ\s.,!?;:()'\-""\n]/g, ' ');
-          cleanText = cleanText.replace(/\s+/g, ' ').trim(); 
-
-          if (cleanText.length > 80000) {
-            cleanText = cleanText.substring(0, 80000) + "... [Texte extrait et condensé]";
-          }
-
+          let cleanText = e.target.result.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                                         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                                         .replace(/<[^>]+>/g, ' ')
+                                         .replace(/\s+/g, ' ').trim();
+          if (cleanText.length > 80000) cleanText = cleanText.substring(0, 80000) + "...";
           selectedFile.text = cleanText;
           previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name}</span>`;
           previewContainer.style.display = "flex";
@@ -275,7 +247,7 @@
           button.classList.remove('copied');
           button.innerHTML = `<i class="fas fa-copy"></i>`;
         }, 2000);
-      }).catch(err => { console.error(err); });
+      }).catch(err => console.error(err));
     }
 
     function displayMessage(role, text, isHistoryLoad = false) {
@@ -294,7 +266,7 @@
         msgDiv.querySelector('.render-zone').textContent = text;
       } else {
         msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
-        Prism.highlightAllUnder(msgDiv);
+        Prism.highlightAllUnder(msgDiv); // FORCE LE RENDU DES COULEURS DU CODE
       }
       
       msgDiv.querySelector('.copy-btn').onclick = function() { copyText(this, text); };
@@ -303,34 +275,12 @@
       return msgDiv;
     }
 
-    function handleActionClick() {
-      if (isGenerating) {
-        stopGeneration();
-      } else {
-        sendMessage();
-      }
-    }
-
-    function stopGeneration() {
-      if (currentAbortController) {
-        currentAbortController.abort(); 
-      }
-    }
-
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
       const messageText = input.value.trim();
-      const sendButton = document.getElementById('send-button');
-      const buttonIcon = document.getElementById('button-icon');
       
       if (!messageText && !selectedFile) return;
-
-      isGenerating = true;
-      buttonIcon.className = "fas fa-stop";
-
-      currentAbortController = new AbortController();
-      const { signal } = currentAbortController;
 
       if (allChats[currentChatId].title === "Nouvelle discussion") {
         allChats[currentChatId].title = messageText ? messageText.substring(0, 24) + "..." : "Analyse de fichier";
@@ -342,124 +292,57 @@
       }
       displayMessage('user', viewText);
 
-      let contentStructure;
+      let contentStructure = messageText;
       if (selectedFile) {
         if (selectedFile.type.startsWith("image/")) {
-          contentStructure = [
-            { type: "text", text: messageText || "Analyse cette image." },
-            { type: "image_url", image_url: { url: selectedFile.base64 } }
-          ];
+          contentStructure = [{ type: "text", text: messageText || "Analyse cette image." }, { type: "image_url", image_url: { url: selectedFile.base64 } }];
         } else {
           contentStructure = `Voici le contenu du fichier joint (${selectedFile.name}) :\n---\n${selectedFile.text}\n---\n\nQuestion : ${messageText}`;
         }
-      } else {
-        contentStructure = messageText;
       }
 
       allChats[currentChatId].history.push({ role: "user", content: contentStructure });
       allChats[currentChatId].updatedAt = Date.now();
       saveToStorage();
       renderSidebar();
-
       clearFile();
       input.value = '';
 
-      const botMessage = document.createElement('div');
-      botMessage.className = 'message bot-message';
-      botMessage.innerHTML = `
-        <button class="copy-btn"><i class="fas fa-copy"></i></button>
-        <div class="message-text-content">
-          <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom se connecte...</span>
-        </div>
-      `;
-      chatContainer.appendChild(botMessage);
+      const loadingMessage = document.createElement('div');
+      loadingMessage.className = 'message bot-message loading-message';
+      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Axiom réfléchit...`;
+      chatContainer.appendChild(loadingMessage);
       chatContainer.scrollTop = chatContainer.scrollHeight;
-
-      const renderZone = botMessage.querySelector('.render-zone');
-      let fullResponseText = ""; 
 
       try {
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history: allChats[currentChatId].history }),
-          signal: signal 
+          body: JSON.stringify({ history: allChats[currentChatId].history })
         });
 
-        if (!response.ok) throw new Error("Erreur serveur");
+        const data = await response.json();
+        chatContainer.removeChild(loadingMessage);
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop();
-
-          for (const line of lines) {
-            const cleanedLine = line.trim();
-            if (!cleanedLine) continue;
-            if (cleanedLine === "data: [DONE]") continue;
-
-            if (cleanedLine.startsWith("data: ")) {
-              try {
-                const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
-                
-                if (parsed.error) {
-                  renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ${parsed.error}</span>`;
-                  botMessage.className = 'message error-message';
-                  finalizeGenerationState();
-                  return;
-                }
-
-                if (parsed.content) {
-                  fullResponseText += parsed.content;
-                  renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-                  
-                  // Coloration en temps réel pendant le flux streaming
-                  Prism.highlightAllUnder(botMessage);
-                  chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
-              } catch (e) {}
-            }
-          }
-        }
-
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          fullResponseText += " *[Réponse interrompue]*";
-          renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-          Prism.highlightAllUnder(botMessage);
+        if (data.reply && data.reply.startsWith("Erreur")) {
+          const errDiv = displayMessage('error', data.reply);
+          errDiv.className = 'message error-message';
         } else {
-          console.error("Erreur de flux :", error);
-          renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux.</span>`;
-          botMessage.className = 'message error-message';
-        }
-      } finally {
-        if (fullResponseText.trim() !== "") {
-          botMessage.querySelector('.copy-btn').onclick = function() {
-            copyText(this, fullResponseText);
-          };
-          allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
+          displayMessage('assistant', data.reply);
+          allChats[currentChatId].history.push({ role: "assistant", content: data.reply });
           allChats[currentChatId].updatedAt = Date.now();
           saveToStorage();
         }
-        finalizeGenerationState();
+
+      } catch (error) {
+        if (chatContainer.contains(loadingMessage)) chatContainer.removeChild(loadingMessage);
+        const errDiv = displayMessage('error', "Erreur réseau.");
+        errDiv.className = 'message error-message';
       }
     }
 
-    function finalizeGenerationState() {
-      isGenerating = false;
-      currentAbortController = null;
-      document.getElementById('button-icon').className = "fas fa-paper-plane";
-    }
-
     document.getElementById('user-input').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') handleActionClick();
+      if (e.key === 'Enter') sendMessage();
     });
   </script>
 </body>
