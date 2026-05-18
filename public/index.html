@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Axiom</title>
-  
   <link rel="icon" type="image/png" href="logo-Axiom.png">
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
@@ -21,7 +19,7 @@
         <i class="fas fa-plus"></i> Nouveau chat
       </button>
       <div id="history-list">
-        </div>
+      </div>
     </aside>
 
     <main id="main-chat">
@@ -31,7 +29,7 @@
       </header>
 
       <div id="chat-container">
-        </div>
+      </div>
 
       <div id="input-area">
         <div id="preview-container">
@@ -261,6 +259,7 @@
       return msgDiv;
     }
 
+    // NOUVELLE LOGIQUE D'ENVOI ET DE LECTURE DU STREAM EN CONTINU
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const chatContainer = document.getElementById('chat-container');
@@ -300,11 +299,20 @@
       clearFile();
       input.value = '';
 
-      const loadingMessage = document.createElement('div');
-      loadingMessage.className = 'message bot-message loading-message';
-      loadingMessage.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Axiom réfléchit...`;
-      chatContainer.appendChild(loadingMessage);
+      // Création de la bulle du bot qui va accueillir les mots au fur et à mesure
+      const botMessage = document.createElement('div');
+      botMessage.className = 'message bot-message';
+      botMessage.innerHTML = `
+        <button class="copy-btn"><i class="fas fa-copy"></i></button>
+        <div class="message-text-content">
+          <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> En attente...</span>
+        </div>
+      `;
+      chatContainer.appendChild(botMessage);
       chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      const renderZone = botMessage.querySelector('.render-zone');
+      let fullResponseText = ""; // Accumulateur du texte reçu
 
       try {
         const response = await fetch("/chat", {
@@ -313,23 +321,66 @@
           body: JSON.stringify({ history: allChats[currentChatId].history })
         });
 
-        const data = await response.json();
-        chatContainer.removeChild(loadingMessage);
+        if (!response.ok) throw new Error("Erreur serveur réseau");
 
-        if (data.reply && data.reply.startsWith("Erreur")) {
-          const errDiv = displayMessage('error', data.reply);
-          errDiv.className = 'message error-message';
-        } else {
-          displayMessage('assistant', data.reply);
-          allChats[currentChatId].history.push({ role: "assistant", content: data.reply });
-          allChats[currentChatId].updatedAt = Date.now();
-          saveToStorage();
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            const cleanedLine = line.trim();
+            if (!cleanedLine) continue;
+
+            if (cleanedLine === "data: [DONE]") {
+              // Fin du stream atteinte avec succès
+              continue;
+            }
+
+            if (cleanedLine.startsWith("data: ")) {
+              try {
+                const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
+                
+                if (parsed.error) {
+                  renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ${parsed.error}</span>`;
+                  botMessage.className = 'message error-message';
+                  return;
+                }
+
+                if (parsed.content) {
+                  fullResponseText += parsed.content;
+                  // On remplace le texte brut par du HTML converti depuis le Markdown en temps réel
+                  renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+                  chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+              } catch (e) {
+                // Erreur de parsing d'une ligne ignorée
+              }
+            }
+          }
         }
 
+        // Configuration définitive du bouton de copie une fois le stream fini
+        botMessage.querySelector('.copy-btn').onclick = function() {
+          copyText(this, fullResponseText);
+        };
+
+        // Sauvegarde définitive de la réponse complète dans l'historique local
+        allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
+        allChats[currentChatId].updatedAt = Date.now();
+        saveToStorage();
+
       } catch (error) {
-        if (chatContainer.contains(loadingMessage)) chatContainer.removeChild(loadingMessage);
-        const errDiv = displayMessage('error', "Erreur réseau.");
-        errDiv.className = 'message error-message';
+        console.error("Erreur de flux :", error);
+        renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de connexion au flux en continu.</span>`;
+        botMessage.className = 'message error-message';
       }
     }
 
