@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Axiom</title>
   <link rel="icon" type="image/png" href="logo-Axiom.png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
+  <link href="[https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap)" rel="stylesheet">
+  
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css](https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css)">
+
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/marked/marked.min.js](https://cdn.jsdelivr.net/npm/marked/marked.min.js)"></script>
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js](https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js)"></script>
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js](https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js)"></script>
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js](https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js)"></script>
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js](https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js)"></script> <script src="[https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js](https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js)"></script>
 </head>
 <body>
 
@@ -61,6 +68,37 @@
     // VARIABLES DE CONTRÔLE
     let isGenerating = false; 
     let currentAbortController = null; 
+
+    // CONFIGURATION DE MARKED POUR LE RENDU SNAPCODE Customisé
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, infostring) {
+      const lang = infostring || 'txt';
+      // Structure HTML style Snapcode (Fenêtre Mac + Code)
+      return `
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-buttons">
+              <span class="code-dot red"></span>
+              <span class="code-dot yellow"></span>
+              <span class="code-dot green"></span>
+            </div>
+            <span class="code-lang">${lang}</span>
+          </div>
+          <pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>
+        </div>
+      `;
+    };
+    marked.setOptions({ renderer: renderer });
+
+    // Fonction utilitaire pour éviter que le HTML brut casse la page dans les balises code
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
     window.onload = function() {
       renderSidebar();
@@ -258,6 +296,8 @@
         msgDiv.querySelector('.render-zone').textContent = text;
       } else {
         msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
+        // Coloration syntaxique au chargement de l'historique
+        Prism.highlightAllUnder(msgDiv);
       }
       
       msgDiv.querySelector('.copy-btn').onclick = function() { copyText(this, text); };
@@ -289,7 +329,6 @@
       
       if (!messageText && !selectedFile) return;
 
-      // Changement d'icône uniquement (le fond garde son dégradé d'origine d'envoi)
       isGenerating = true;
       buttonIcon.className = "fas fa-stop";
       sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
@@ -384,6 +423,10 @@
                 if (parsed.content) {
                   fullResponseText += parsed.content;
                   renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+                  
+                  // FORCE LA RECOLORATION SYNTAXIQUE DU BLOC DE CODE EN COURS DE STREAMING
+                  Prism.highlightAllUnder(botMessage);
+                  
                   chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
               } catch (e) {}
@@ -396,6 +439,7 @@
           console.log("Génération interrompue.");
           fullResponseText += " *[Réponse interrompue]*";
           renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+          Prism.highlightAllUnder(botMessage);
         } else {
           console.error("Erreur de flux :", error);
           renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux.</span>`;
