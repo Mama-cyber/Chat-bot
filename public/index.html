@@ -43,7 +43,7 @@
           </label>
           <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)">
 
-          <input type="text" id="user-input" placeholder="Écrivez votre message...">
+          <textarea id="user-input" placeholder="Écrivez votre message..." rows="1"></textarea>
           <button id="send-button" onclick="handleActionClick()"><i class="fas fa-paper-plane" id="button-icon"></i></button>
         </div>
       </div>
@@ -64,6 +64,7 @@
 
     window.onload = function() {
       renderSidebar();
+      initTextareaAutoResize(); // Lance le redimensionnement automatique de la zone de texte
       if (Object.keys(allChats).length > 0) {
         const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
         loadChat(sortedIds[0]);
@@ -71,6 +72,31 @@
         startNewChat();
       }
     };
+
+    // Ajustement automatique de la hauteur du champ d'écriture
+    function initTextareaAutoResize() {
+      const textarea = document.getElementById('user-input');
+      
+      textarea.addEventListener('input', function() {
+        this.style.height = '42px'; // Remise à zéro pour recalculer correctement
+        this.style.height = (this.scrollHeight) + 'px'; // S'adapte au contenu
+      });
+
+      // Permet d'envoyer avec "Entrée" sans ajouter de saut de ligne, 
+      // tout en gardant "Maj + Entrée" disponible pour aller à la ligne manuellement.
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleActionClick();
+        }
+      });
+    }
+
+    // Réinitialise la hauteur de la boîte de texte après un envoi
+    function resetTextareaHeight() {
+      const textarea = document.getElementById('user-input');
+      textarea.style.height = '42px';
+    }
 
     // Fermeture automatique au clic à l'extérieur sur mobile
     document.addEventListener('click', function(event) {
@@ -201,7 +227,7 @@
         reader.onload = function(e) {
           selectedFile.base64 = e.target.result;
           previewContent.innerHTML = `<img src="${e.target.result}"> <span>${file.name}</span>`;
-          previewContainer.style.display = "flex";
+          previewContainer.style.setProperty('display', 'flex', 'important');
         };
         reader.readAsDataURL(file);
       } else {
@@ -219,7 +245,7 @@
 
           selectedFile.text = cleanText;
           previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name}</span>`;
-          previewContainer.style.display = "flex";
+          previewContainer.style.setProperty('display', 'flex', 'important');
         };
         reader.readAsText(file);
       }
@@ -228,7 +254,7 @@
     function clearFile() {
       selectedFile = null;
       document.getElementById("file-input").value = "";
-      document.getElementById("preview-container").style.display = "none";
+      document.getElementById("preview-container").style.setProperty('display', 'none', 'important');
     }
 
     function copyText(button, textToCopy) {
@@ -289,7 +315,6 @@
       
       if (!messageText && !selectedFile) return;
 
-      // Changement d'icône uniquement (le fond garde son dégradé d'origine d'envoi)
       isGenerating = true;
       buttonIcon.className = "fas fa-stop";
       sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
@@ -328,6 +353,7 @@
 
       clearFile();
       input.value = '';
+      resetTextareaHeight(); // Remet la boîte de texte à sa taille initiale réduite
 
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot-message';
@@ -420,10 +446,6 @@
       document.getElementById('button-icon').className = "fas fa-paper-plane";
       document.getElementById('send-button').style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
     }
-
-    document.getElementById('user-input').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') handleActionClick();
-    });
   </script>
 </body>
 </html>
