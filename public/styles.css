@@ -159,6 +159,10 @@ header h1 {
   font-weight: 700;
 }
 
+header a {
+  text-decoration: none;
+}
+
 #menu-toggle {
   display: block; 
   position: absolute;
@@ -220,19 +224,21 @@ header h1 {
   border-bottom-right-radius: 5px;
 }
 
+/* AJUSTEMENT : Fond blanc cassé plus dense et bordure contrastée pour l'IA */
 .bot-message {
-  background-color: white;
+  background-color: #FFFDFB;
   color: var(--text);
   align-self: flex-start;
-  border: 1px solid rgba(224, 122, 95, 0.15);
+  border: 1px solid rgba(224, 122, 95, 0.25);
   border-bottom-left-radius: 5px;
   width: 100%;
+  box-shadow: 0 4px 12px rgba(94, 48, 35, 0.06);
 }
 
 .bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
 .bot-message-content p { margin-bottom: 6px; }
 
-/* ===== BLOCS DE CODE MODIFIÉS POUR LE DÉFILEMENT HORIZONTAL ===== */
+/* ===== BLOCS DE CODE (BARRE HORIZONTALE & COPIE UNIQUE) ===== */
 .code-container {
   position: relative;
   background: #1e1e1e !important;
@@ -264,23 +270,52 @@ header h1 {
   color: #858585;
   text-transform: uppercase;
   font-weight: 600;
+  margin-right: auto;
+  margin-left: 12px;
+}
+
+/* BOUTON COPIER UNIQUEMENT LE CODE */
+.copy-code-only-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #c5c5c5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.copy-code-only-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.copy-code-only-btn.copied {
+  background-color: rgba(39, 201, 63, 0.2) !important;
+  border-color: #27c93f !important;
+  color: #27c93f !important;
 }
 
 .code-container pre { 
   margin: 0 !important; 
   padding: 1.2rem 1rem !important; 
   background: transparent !important; 
-  overflow-x: auto;            /* Active la barre de défilement horizontale */
-  white-space: pre;            /* Empêche les retours à la ligne automatiques */
-  word-wrap: normal;           /* Réinitialise la coupure des mots */
-  word-break: normal;          /* Réinitialise la cassure des mots */
+  overflow-x: auto;            /* Active le défilement horizontal */
+  white-space: pre;            /* Maintient le code sur une ligne continue */
+  word-wrap: normal;           
+  word-break: normal;          
 }
 
 .code-container code { 
   font-family: 'Consolas', monospace !important; 
   font-size: 0.9rem !important; 
   color: #d4d4d4; 
-  white-space: pre;            /* Maintient l'affichage en ligne continue */
+  white-space: pre;            
 }
 
 /* ===== BARRE DE SAISIE ===== */
@@ -324,11 +359,11 @@ header h1 {
   font-weight: 500;
 }
 
-/* ZONE D'APERÇU */
+/* ZONE D'APERÇU DU FICHIER JOINT */
 #preview-container {
   max-width: 800px;
   margin: 0 auto 0.5rem auto;
-  display: none !important; 
+  display: none; 
   align-items: center;
   gap: 10px;
   background: #FDF0E6;
@@ -350,7 +385,7 @@ header h1 {
   align-items: flex-end; 
 }
 
-/* CHAMP TEXTAREA EXTENSIBLE */
+/* TEXTAREA EXTENSIBLE DESIGN CORRIGÉ */
 #user-input {
   flex: 1;
   padding: 0.7rem 1.1rem;
