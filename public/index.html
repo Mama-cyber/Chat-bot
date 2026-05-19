@@ -32,6 +32,24 @@
       </div>
 
       <div id="input-area">
+        <div id="generation-options">
+          <div class="option-select-group">
+            <i class="fas fa-text-height"></i>
+            <select id="option-length">
+              <option value="court">Court</option>
+              <option value="moyen" selected>Moyen</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+          <div class="option-select-group">
+            <i class="fas fa-graduation-cap"></i>
+            <select id="option-level">
+              <option value="debutant" selected>Débutant</option>
+              <option value="expert">Expert</option>
+            </select>
+          </div>
+        </div>
+
         <div id="preview-container">
           <span id="preview-content"></span>
           <i class="fas fa-times" id="remove-file" onclick="clearFile()"></i>
@@ -313,6 +331,10 @@
       const sendButton = document.getElementById('send-button');
       const buttonIcon = document.getElementById('button-icon');
       
+      // Récupération des options sélectionnées
+      const lengthOption = document.getElementById('option-length').value;
+      const levelOption = document.getElementById('option-level').value;
+      
       if (!messageText && !selectedFile) return;
 
       isGenerating = true;
@@ -373,7 +395,10 @@
         const response = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history: allChats[currentChatId].history }),
+          body: JSON.stringify({ 
+            history: allChats[currentChatId].history,
+            options: { length: lengthOption, level: levelOption } // Envoi des options au serveur
+          }),
           signal: signal 
         });
 
