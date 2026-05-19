@@ -271,8 +271,8 @@ header h1 {
   padding: 1.2rem 1rem !important; 
   background: transparent !important; 
   overflow-x: auto;
-  white-space: pre-wrap;       /* Force le code à passer à la ligne */
-  word-wrap: break-word;       /* Coupe les mots ultra longs si besoin */
+  white-space: pre-wrap;       
+  word-wrap: break-word;       
   word-break: break-word;
 }
 
@@ -280,7 +280,7 @@ header h1 {
   font-family: 'Consolas', monospace !important; 
   font-size: 0.9rem !important; 
   color: #d4d4d4; 
-  white-space: pre-wrap;       /* Assure la compatibilité sur l'élément code */
+  white-space: pre-wrap;       
 }
 
 /* ===== BARRE DE SAISIE ===== */
@@ -289,6 +289,39 @@ header h1 {
   border-top: 1px solid rgba(224, 122, 95, 0.15);
   padding: 0.8rem 1rem;
   width: 100%;
+}
+
+/* PANNEAU DES OPTIONS DE GENERATION HAUT ET DISCRET */
+#generation-options {
+  max-width: 800px;
+  margin: 0 auto 0.6rem auto;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.option-select-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(253, 245, 230, 0.7);
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(224, 122, 95, 0.25);
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.option-select-group select {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 500;
 }
 
 /* ZONE D'APERÇU MASQUÉE PAR DÉFAUT */
@@ -314,7 +347,7 @@ header h1 {
   margin: 0 auto;
   display: flex;
   gap: 0.6rem;
-  align-items: flex-end; /* Aligne les boutons en bas lorsque le champ s'agrandit */
+  align-items: flex-end; 
 }
 
 /* CHAMP TEXTAREA EXTENSIBLE DESIGN CORRIGÉ */
@@ -328,11 +361,11 @@ header h1 {
   background-color: rgba(253, 245, 230, 0.6);
   font-size: 0.95rem;
   font-family: 'Poppins', sans-serif;
-  resize: none;                /* Désactive la poignée manuelle de redimensionnement */
-  height: 42px;                /* Hauteur de départ */
-  max-height: 120px;           /* Limite la hauteur à environ 4 lignes maximum */
+  resize: none;                
+  height: 42px;                
+  max-height: 120px;           
   line-height: 1.4;
-  overflow-y: auto;            /* Ajoute un scroll interne discret si > 4 lignes */
+  overflow-y: auto;            
 }
 
 .file-upload-btn, #send-button {
@@ -344,7 +377,7 @@ header h1 {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  margin-bottom: 1px;          /* Ajustement optique avec le textarea arrondi */
+  margin-bottom: 1px;          
 }
 
 .file-upload-btn { background-color: rgba(253, 245, 230, 0.6); border: 1px solid var(--primary); color: var(--text); }
@@ -354,6 +387,8 @@ header h1 {
 @media (max-width: 768px) {
   #sidebar { position: absolute; left: 0; top: 0; bottom: 0; margin: 15px; height: calc(100% - 30px); transform: translateX(-120%); width: 260px; }
   #sidebar.open { transform: translateX(0) !important; }
+  #generation-options { gap: 8px; }
+  .option-select-group { padding: 4px 6px; }
 }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
