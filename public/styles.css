@@ -159,10 +159,6 @@ header h1 {
   font-weight: 700;
 }
 
-header a {
-  text-decoration: none;
-}
-
 #menu-toggle {
   display: block; 
   position: absolute;
@@ -224,21 +220,19 @@ header a {
   border-bottom-right-radius: 5px;
 }
 
-/* AJUSTEMENT : Fond blanc cassé plus dense et bordure contrastée pour l'IA */
 .bot-message {
-  background-color: #FFFDFB;
+  background-color: white;
   color: var(--text);
   align-self: flex-start;
-  border: 1px solid rgba(224, 122, 95, 0.25);
+  border: 1px solid rgba(224, 122, 95, 0.15);
   border-bottom-left-radius: 5px;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(94, 48, 35, 0.06);
 }
 
 .bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
 .bot-message-content p { margin-bottom: 6px; }
 
-/* ===== BLOCS DE CODE (BARRE HORIZONTALE & COPIE UNIQUE) ===== */
+/* ===== BLOCS DE CODE DESIGN SNAPCODE (CORRIGÉ POUR RETOUR À LA LIGNE) ===== */
 .code-container {
   position: relative;
   background: #1e1e1e !important;
@@ -270,52 +264,23 @@ header a {
   color: #858585;
   text-transform: uppercase;
   font-weight: 600;
-  margin-right: auto;
-  margin-left: 12px;
-}
-
-/* BOUTON COPIER UNIQUEMENT LE CODE */
-.copy-code-only-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #c5c5c5;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-family: 'Poppins', sans-serif;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.copy-code-only-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-}
-
-.copy-code-only-btn.copied {
-  background-color: rgba(39, 201, 63, 0.2) !important;
-  border-color: #27c93f !important;
-  color: #27c93f !important;
 }
 
 .code-container pre { 
   margin: 0 !important; 
   padding: 1.2rem 1rem !important; 
   background: transparent !important; 
-  overflow-x: auto;            /* Active le défilement horizontal */
-  white-space: pre;            /* Maintient le code sur une ligne continue */
-  word-wrap: normal;           
-  word-break: normal;          
+  overflow-x: auto;
+  white-space: pre-wrap;       
+  word-wrap: break-word;       
+  word-break: break-word;
 }
 
 .code-container code { 
   font-family: 'Consolas', monospace !important; 
   font-size: 0.9rem !important; 
   color: #d4d4d4; 
-  white-space: pre;            
+  white-space: pre-wrap;       
 }
 
 /* ===== BARRE DE SAISIE ===== */
@@ -326,7 +291,7 @@ header a {
   width: 100%;
 }
 
-/* PANNEAU DES OPTIONS DE GENERATION */
+/* PANNEAU DES OPTIONS DE GENERATION HAUT ET DISCRET */
 #generation-options {
   max-width: 800px;
   margin: 0 auto 0.6rem auto;
@@ -359,11 +324,11 @@ header a {
   font-weight: 500;
 }
 
-/* ZONE D'APERÇU DU FICHIER JOINT */
+/* ZONE D'APERÇU MASQUÉE PAR DÉFAUT */
 #preview-container {
   max-width: 800px;
   margin: 0 auto 0.5rem auto;
-  display: none; 
+  display: none !important; 
   align-items: center;
   gap: 10px;
   background: #FDF0E6;
@@ -385,7 +350,7 @@ header a {
   align-items: flex-end; 
 }
 
-/* TEXTAREA EXTENSIBLE DESIGN CORRIGÉ */
+/* CHAMP TEXTAREA EXTENSIBLE DESIGN CORRIGÉ */
 #user-input {
   flex: 1;
   padding: 0.7rem 1.1rem;
