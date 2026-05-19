@@ -16,6 +16,7 @@ app.use(express.static("public"));
 
 app.post("/chat", async (req, res) => {
   try {
+    // CORRECTION CRITIQUE : On récupère "history" ET "options" envoyés par le fichier HTML
     const { history, options } = req.body;
     const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -27,42 +28,53 @@ app.post("/chat", async (req, res) => {
       return res.status(400).json({ reply: "Erreur : L'historique de discussion est invalide." });
     }
 
-    // Récupération des préférences utilisateur issues du Front-End (avec fallbacks)
+    // Extraction des choix de l'utilisateur (avec valeurs par défaut de secours)
     const length = options?.length || 'moyen';
     const level = options?.level || 'debutant';
 
-    // 1. DÉFINITION DU SYSTEM INSTRUCTION PERSONNALISÉ
+    // CONSTRUCTION DU PROMPT SYSTEME DYNAMIQUE EN FONCTION DE TES CLICS
     let systemPrompt = `Tu es Axiom, un assistant IA expert en programmation et un pédagogue hors pair.\n\n`;
 
-    // Gestion de l'adaptation technique (Débutant vs Expert)
+    // 1. Force l'IA à changer son vocabulaire selon le niveau choisi
     if (level === "debutant") {
-      systemPrompt += `- ADAPTATION TECHNIQUE : L'utilisateur est DÉBUTANT. Vulgarise les notions complexes, évite le jargon technique brut ou explique-le simplement, utilise des analogies parlantes et commente obligatoirement chaque ligne de code de manière limpide.\n`;
+      systemPrompt += `[CONSIGNE CRITIQUE - NIVEAU DÉBUTANT] :\n`;
+      systemPrompt += `- L'utilisateur est un grand débutant en programmation.\n`;
+      systemPrompt += `- Vulgarise absolument TOUT. N'utilise aucun jargon complexe sans l'expliquer.\n`;
+      systemPrompt += `- Fais des analogies simples avec la vie de tous les jours.\n`;
+      systemPrompt += `- AJOUTE OBLIGATOIREMENT DES COMMENTAIRES SIMPLES SUR CHAQUE LIGNE DE CODE pour expliquer son rôle.\n\n`;
     } else {
-      systemPrompt += `- ADAPTATION TECHNIQUE : L'utilisateur est EXPERT. Sois direct, concis, utilise le vocabulaire technique approprié, fournis du code hautement optimisé, moderne et robuste sans t'attarder sur les explications triviales.\n`;
+      systemPrompt += `[CONSIGNE CRITIQUE - NIVEAU EXPERT] :\n`;
+      systemPrompt += `- L'utilisateur est un développeur chevronné de haut niveau.\n`;
+      systemPrompt += `- Sois direct, technique, précis et va droit au but.\n`;
+      systemPrompt += `- Fournis du code ultra-optimisé, moderne (ES6+, clean code), sécurisé et robuste.\n`;
+      systemPrompt += `- Ne perds pas de temps avec des explications de base (pas besoin d'expliquer ce qu'est une boucle ou une variable).\n\n`;
     }
 
-    // Gestion du niveau de détail (Court, Moyen, Long)
+    // 2. Force l'IA à couper ou étendre sa réponse selon la taille choisie
     if (length === "court") {
-      systemPrompt += `- ADAPTATION DU DÉTAIL : Fais une réponse ultra-courte. Va droit au but, élimine le texte superflu et affiche le code ou la correction instantanément.\n`;
+      systemPrompt += `[CONSIGNE CRITIQUE - FORMAT COURT] :\n`;
+      systemPrompt += `- Ta réponse doit être extrêmement concise et faire moins de 5 à 10 lignes.\n`;
+      systemPrompt += `- Supprime les salutations, les introductions et les conclusions.\n`;
+      systemPrompt += `- Donne directement le code corrigé ou la réponse brute sans tourner autour du pot.\n\n`;
     } else if (length === "moyen") {
-      systemPrompt += `- ADAPTATION DU DÉTAIL : Équilibre ta réponse entre une explication conceptuelle essentielle et le code d'illustration.\n`;
+      systemPrompt += `[CONSIGNE CRITIQUE - FORMAT MOYEN] :\n`;
+      systemPrompt += `- Fais une réponse équilibrée.\n`;
+      systemPrompt += `- Une explication rapide du concept de quelques lignes, suivie du bloc de code nécessaire.\n\n`;
     } else {
-      systemPrompt += `- ADAPTATION DU DÉTAIL : Rédige une réponse exhaustive et très détaillée. Analyse le contexte sous-jacent, décortique le fonctionnement interne du code et explore les aspects d'architecture.\n`;
+      systemPrompt += `[CONSIGNE CRITIQUE - FORMAT LONG] :\n`;
+      systemPrompt += `- Rédige une réponse exhaustive, encyclopédique et très détaillée.\n`;
+      systemPrompt += `- Analyse le contexte global, explique le fonctionnement interne de la machine ou du langage, et liste les pièges courants à éviter.\n\n`;
     }
 
-    // Directives structurelles additionnelles (Pédagogie, Proactivité, Validation, Liens)
+    // 3. Intégration des autres fonctionnalités pédagogiques de ta feuille de route
     systemPrompt += `
-- STRUCTURATION PÉDAGOGIQUE : À moins que l'utilisateur ne demande une réponse directe ou un format court, organise tes explications selon l'enchaînement logique suivant :
-  1. 📘 Théorie / Concept (expliqué selon le profil de l'utilisateur)
-  2. 💻 Exemple concret (un ou des blocs de code valides et structurés)
-  3. 🛠️ Mise en pratique / Défi (propose toujours un petit exercice de réflexion ou un mini-challenge adapté en fin de message).
-- SPÉCIALISATION TECHNIQUE & VALIDATION : Valide systématiquement la syntaxe et la sécurité du code fourni. Suggère systématiquement des optimisations (performances) ou des alternatives d'écriture modernes (Clean Code).
-- INTERACTION PROACTIVE : Analyse attentivement le contexte des messages précédents. Si la demande de l'utilisateur est trop vague, floue ou manque de précisions techniques, réponds au mieux de tes capacités mais pose obligatoirement 1 ou 2 questions de clarification ciblées à la fin.
-- RESSOURCES COMPLÉMENTAIRES : Termine systématiquement tes réponses par une section intitulée "📚 Ressources" dans laquelle tu recommanderas des liens vers la documentation officielle (MDN, Node docs, etc.), des extensions ou des outils pertinents.
+[DIRECTIVES COMPLÉMENTAIRES SYSTÉMATIQUES] :
+- STRUCTURATION : Organise tes réponses avec des sections claires : 📘 Théorie, 💻 Exemple, et termine TOUJOURS par un petit exercice pratique nommé "🛠️ Défi du jour" adapté au niveau sélectionné.
+- PROACTIVITÉ : Si la demande de l'utilisateur est trop courte ou floue, propose une solution par défaut mais termine obligatoirement en posant 1 ou 2 questions de clarification très précises.
+- RESSOURCES : Termine chaque fin de message par une section "📚 Ressources" listant des outils ou documentations officielles.
 `;
 
-    // 2. PRÉPARATION DES MESSAGES POUR OPENROUTER
-    // OpenRouter requiert d'injecter la consigne au début du tableau d'historique sous forme de rôle 'system'
+    // PREPARATION DU PAQUET AVEC LA REGLE SYSTEME EN PREMIER
     const openRouterMessages = [
       { role: "system", content: systemPrompt },
       ...history
@@ -73,7 +85,7 @@ app.post("/chat", async (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    // Appel à OpenRouter avec l'option "stream: true"
+    // Appel à OpenRouter
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -85,12 +97,11 @@ app.post("/chat", async (req, res) => {
         body: JSON.stringify({
           model: "openrouter/free", 
           messages: openRouterMessages,
-          stream: true // Activation du streaming
+          stream: true 
         })
       }
     );
 
-    // Lecture du flux de données provenant d'OpenRouter
     const reader = response.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
@@ -101,8 +112,6 @@ app.post("/chat", async (req, res) => {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
-      
-      // On garde la dernière ligne incomplète dans le buffer
       buffer = lines.pop(); 
 
       for (const line of lines) {
@@ -118,12 +127,9 @@ app.post("/chat", async (req, res) => {
             const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
             const content = parsed.choices?.[0]?.delta?.content || "";
             if (content) {
-              // Envoi direct du morceau de texte à index.html
               res.write(`data: ${JSON.stringify({ content })}\n\n`);
             }
-          } catch (e) {
-            // Ligne ignorée si ce n'est pas du JSON valide
-          }
+          } catch (e) {}
         }
       }
     }
@@ -132,7 +138,6 @@ app.post("/chat", async (req, res) => {
 
   } catch (error) {
     console.error("Erreur critique sur le serveur :", error);
-    // En cas d'erreur au milieu du stream, on ferme proprement le flux
     res.write(`data: ${JSON.stringify({ error: "Erreur serveur interne" })}\n\n`);
     res.end();
   }
