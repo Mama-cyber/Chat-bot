@@ -29,7 +29,7 @@ app.post("/chat", async (req, res) => {
     }
 
     // Extraction des choix de l'utilisateur (avec valeurs par défaut de secours)
-    const length = options?.length || 'moyen';
+    const length = options?.length || 'court';
     const level = options?.level || 'debutant';
 
     // CONSTRUCTION DU PROMPT SYSTEME DYNAMIQUE EN FONCTION DE TES CLICS
