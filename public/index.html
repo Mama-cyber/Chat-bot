@@ -80,35 +80,9 @@
     let isGenerating = false; 
     let currentAbortController = null; 
 
-    // CONFIGURATION DE MARKED POUR INJECTER LA SECTION ET LE BOUTON "COPIER LE CODE"
-    const renderer = new marked.Renderer();
-    renderer.code = function(code, infostring) {
-      const lang = infostring || 'code';
-      // Échapper le code pour éviter les interférences avec le HTML du bouton
-      const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      
-      return `
-        <div class="code-container">
-          <div class="code-header">
-            <div class="code-buttons">
-              <span class="code-dot red"></span>
-              <span class="code-dot yellow"></span>
-              <span class="code-dot green"></span>
-            </div>
-            <span class="code-lang">${lang}</span>
-            <button class="copy-code-only-btn" onclick="copyOnlyCode(this, \`${escapedCode}\`)">
-              <i class="fas fa-copy"></i> Copier le code
-            </button>
-          </div>
-          <pre><code class="language-${lang}">${code}</code></pre>
-        </div>
-      `;
-    };
-    marked.setOptions({ renderer: renderer });
-
     window.onload = function() {
       renderSidebar();
-      initTextareaAutoResize();
+      initTextareaAutoResize(); // Lance le redimensionnement automatique de la zone de texte
       if (Object.keys(allChats).length > 0) {
         const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
         loadChat(sortedIds[0]);
@@ -117,26 +91,17 @@
       }
     };
 
-    // Fonction globale pour copier uniquement le code d'un bloc spécifique
-    function copyOnlyCode(button, textToCopy) {
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        button.classList.add('copied');
-        button.innerHTML = `<i class="fas fa-check"></i> Copié !`;
-        setTimeout(() => {
-          button.classList.remove('copied');
-          button.innerHTML = `<i class="fas fa-copy"></i> Copier le code`;
-        }, 2000);
-      }).catch(err => { console.error(err); });
-    }
-
+    // Ajustement automatique de la hauteur du champ d'écriture
     function initTextareaAutoResize() {
       const textarea = document.getElementById('user-input');
       
       textarea.addEventListener('input', function() {
-        this.style.height = '42px'; 
-        this.style.height = (this.scrollHeight) + 'px'; 
+        this.style.height = '42px'; // Remise à zéro pour recalculer correctement
+        this.style.height = (this.scrollHeight) + 'px'; // S'adapte au contenu
       });
 
+      // Permet d'envoyer avec "Entrée" sans ajouter de saut de ligne, 
+      // tout en gardant "Maj + Entrée" disponible pour aller à la ligne manuellement.
       textarea.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
@@ -145,11 +110,13 @@
       });
     }
 
+    // Réinitialise la hauteur de la boîte de texte après un envoi
     function resetTextareaHeight() {
       const textarea = document.getElementById('user-input');
       textarea.style.height = '42px';
     }
 
+    // Fermeture automatique au clic à l'extérieur sur mobile
     document.addEventListener('click', function(event) {
       if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
@@ -327,7 +294,7 @@
       let htmlContent = role === 'user' ? `<i class="fas fa-user me-1"></i> ` : `<i class="fas fa-robot me-1"></i> `;
       
       msgDiv.innerHTML = `
-        <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
+        <button class="copy-btn"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">${htmlContent}<span class="render-zone"></span></div>
       `;
       
@@ -364,6 +331,7 @@
       const sendButton = document.getElementById('send-button');
       const buttonIcon = document.getElementById('button-icon');
       
+      // Récupération des options sélectionnées
       const lengthOption = document.getElementById('option-length').value;
       const levelOption = document.getElementById('option-level').value;
       
@@ -407,12 +375,12 @@
 
       clearFile();
       input.value = '';
-      resetTextareaHeight();
+      resetTextareaHeight(); // Remet la boîte de texte à sa taille initiale réduite
 
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot-message';
       botMessage.innerHTML = `
-        <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
+        <button class="copy-btn"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">
           <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom se connecte...</span>
         </div>
@@ -429,7 +397,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             history: allChats[currentChatId].history,
-            options: { length: lengthOption, level: levelOption }
+            options: { length: lengthOption, level: levelOption } // Envoi des options au serveur
           }),
           signal: signal 
         });
