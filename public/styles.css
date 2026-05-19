@@ -150,6 +150,9 @@ header {
   justify-content: center;
   position: relative;
   z-index: 10;
+  /* MODIFICATION APPLIQUÉE : Coins inférieurs arrondis à 20px */
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 header h1 {
@@ -220,7 +223,6 @@ header h1 {
   border-bottom-right-radius: 5px;
 }
 
-/* MODIFICATION APPLIQUÉE : Fond blanc cassé plus dense + bordure contrastée pour isoler l'IA du fond crème */
 .bot-message {
   background-color: #FFFDFB;
   color: var(--text);
@@ -234,7 +236,7 @@ header h1 {
 .bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
 .bot-message-content p { margin-bottom: 6px; }
 
-/* ===== BLOCS DE CODE (BARRE HORIZONTALE & COPIE UNIQUE) ===== */
+/* ===== BLOCS DE CODE ===== */
 .code-container {
   position: relative;
   background: #1e1e1e !important;
@@ -313,12 +315,16 @@ header h1 {
   white-space: pre;            
 }
 
-/* ===== BARRE DE SAISIE ===== */
+/* ===== BARRE DE SAISIE / FOOTER ===== */
 #input-area {
   background-color: white;
   border-top: 1px solid rgba(224, 122, 95, 0.15);
   padding: 0.8rem 1rem;
   width: 100%;
+  /* MODIFICATION APPLIQUÉE : Coins supérieurs arrondis à 20px */
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -4px 20px rgba(94, 48, 35, 0.05); /* Petite ombre supérieure pour un rendu élégant */
 }
 
 /* PANNEAU DES OPTIONS DE GENERATION */
