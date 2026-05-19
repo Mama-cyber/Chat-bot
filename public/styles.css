@@ -232,7 +232,7 @@ header h1 {
 .bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
 .bot-message-content p { margin-bottom: 6px; }
 
-/* ===== BLOCS DE CODE DESIGN SNAPCODE (CORRIGÉ POUR RETOUR À LA LIGNE) ===== */
+/* ===== BLOCS DE CODE MODIFIÉS POUR LE DÉFILEMENT HORIZONTAL ===== */
 .code-container {
   position: relative;
   background: #1e1e1e !important;
@@ -270,17 +270,17 @@ header h1 {
   margin: 0 !important; 
   padding: 1.2rem 1rem !important; 
   background: transparent !important; 
-  overflow-x: auto;
-  white-space: pre-wrap;       
-  word-wrap: break-word;       
-  word-break: break-word;
+  overflow-x: auto;            /* Active la barre de défilement horizontale */
+  white-space: pre;            /* Empêche les retours à la ligne automatiques */
+  word-wrap: normal;           /* Réinitialise la coupure des mots */
+  word-break: normal;          /* Réinitialise la cassure des mots */
 }
 
 .code-container code { 
   font-family: 'Consolas', monospace !important; 
   font-size: 0.9rem !important; 
   color: #d4d4d4; 
-  white-space: pre-wrap;       
+  white-space: pre;            /* Maintient l'affichage en ligne continue */
 }
 
 /* ===== BARRE DE SAISIE ===== */
@@ -291,7 +291,7 @@ header h1 {
   width: 100%;
 }
 
-/* PANNEAU DES OPTIONS DE GENERATION HAUT ET DISCRET */
+/* PANNEAU DES OPTIONS DE GENERATION */
 #generation-options {
   max-width: 800px;
   margin: 0 auto 0.6rem auto;
@@ -324,7 +324,7 @@ header h1 {
   font-weight: 500;
 }
 
-/* ZONE D'APERÇU MASQUÉE PAR DÉFAUT */
+/* ZONE D'APERÇU */
 #preview-container {
   max-width: 800px;
   margin: 0 auto 0.5rem auto;
@@ -350,7 +350,7 @@ header h1 {
   align-items: flex-end; 
 }
 
-/* CHAMP TEXTAREA EXTENSIBLE DESIGN CORRIGÉ */
+/* CHAMP TEXTAREA EXTENSIBLE */
 #user-input {
   flex: 1;
   padding: 0.7rem 1.1rem;
