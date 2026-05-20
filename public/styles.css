@@ -235,6 +235,46 @@ header h1 {
 .bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
 .bot-message-content p { margin-bottom: 6px; }
 
+/* ACTIONS DE L'IA (NOUVEAU) */
+.bot-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(224, 122, 95, 0.15);
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.action-btn:hover {
+  opacity: 1;
+  background-color: rgba(224, 122, 95, 0.1);
+}
+
+.action-btn.active {
+  opacity: 1;
+  color: var(--primary);
+  background-color: rgba(224, 122, 95, 0.15);
+}
+
+.action-btn.copied {
+  color: var(--success) !important;
+  opacity: 1 !important;
+}
+
 /* ===== BLOCS DE CODE ===== */
 .code-container {
   position: relative;
@@ -384,7 +424,6 @@ header h1 {
   align-items: flex-end; 
 }
 
-/* CHAMP TEXTAREA EXTENSIBLE DESIGN ET RETOURS À LA LIGNE CORRIGÉS */
 #user-input {
   flex: 1;
   padding: 0.7rem 1.1rem;
@@ -400,7 +439,6 @@ header h1 {
   max-height: 120px;           
   line-height: 1.4;
   overflow-y: auto;            
-  /* CORRECTIFS POUR LE RETOUR À LA LIGNE VISUEL */
   white-space: pre-wrap;       
   word-wrap: break-word;       
   word-break: break-word;      
