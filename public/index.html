@@ -519,7 +519,8 @@
                   return;
                 }
 
-                if (parsed.content) { FullResponseText += parsed.content;
+                if (parsed.content) {
+                  fullResponseText += parsed.content;
                   renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
                   chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
