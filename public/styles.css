@@ -150,6 +150,8 @@ header {
   justify-content: center;
   position: relative;
   z-index: 10;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 header h1 {
@@ -157,10 +159,6 @@ header h1 {
   font-size: 1.8rem;
   color: var(--success) !important;
   font-weight: 700;
-}
-
-header a {
-  text-decoration: none;
 }
 
 #menu-toggle {
@@ -189,21 +187,7 @@ header a {
   gap: 1.2rem;
 }
 
-/* ===== STRUCTURE ET BULLES DES MESSAGES ===== */
-.message-wrapper {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.user-wrapper {
-  align-items: flex-end;
-}
-
-.bot-wrapper {
-  align-items: flex-start;
-}
-
+/* ===== BULLES DES MESSAGES ===== */
 .message {
   max-width: 85%;
   padding: 0.8rem 1.2rem;
@@ -216,72 +200,42 @@ header a {
   position: relative;
 }
 
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.message:hover .copy-btn { opacity: 0.6; }
+.copy-btn.copied { color: var(--success) !important; opacity: 1 !important; }
+
 .user-message {
   background: linear-gradient(135deg, var(--primary), #C75B39);
   color: white;
+  align-self: flex-end;
   border-bottom-right-radius: 5px;
 }
 
-/* BLOCAGE ABSOLU DE LA COULEUR VISUELLE DE L'IA EN BLANC PUR */
 .bot-message {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
+  background-color: #FFFDFB;
   color: var(--text);
-  border: 1px solid rgba(224, 122, 95, 0.15);
+  align-self: flex-start;
+  border: 1px solid rgba(224, 122, 95, 0.28);
   border-bottom-left-radius: 5px;
   width: 100%;
-}
-
-.bot-message-content {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-}
-
-.error-message {
-  background-color: #fce8e6 !important;
-  border: 1px solid var(--danger);
-  color: var(--danger);
-  width: 100%;
+  box-shadow: 0 4px 12px rgba(94, 48, 35, 0.06);
 }
 
 .bot-message-content ul, .bot-message-content ol { margin-left: 18px; }
 .bot-message-content p { margin-bottom: 6px; }
 
-/* ===== BARRE D'OUTILS SOUS LES MESSAGES DU BOT ===== */
-.bot-actions-toolbar {
-  display: flex;
-  gap: 14px;
-  margin-top: 6px;
-  padding-left: 10px;
-  animation: fadeIn 0.3s ease;
-}
-
-.action-tool-btn {
-  background: none;
-  border: none;
-  color: #a49187; 
-  cursor: pointer;
-  font-size: 0.85rem;
-  padding: 4px;
-  transition: color 0.2s ease, transform 0.1s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-tool-btn:hover {
-  color: var(--primary);
-}
-
-.action-tool-btn:active {
-  transform: scale(0.9);
-}
-
-.action-tool-btn.active {
-  color: var(--dark) !important;
-}
-
-/* ===== BLOCS DE CODE DESIGN SNAPCODE ===== */
+/* ===== BLOCS DE CODE ===== */
 .code-container {
   position: relative;
   background: #1e1e1e !important;
@@ -313,6 +267,34 @@ header a {
   color: #858585;
   text-transform: uppercase;
   font-weight: 600;
+  margin-right: auto;
+  margin-left: 12px;
+}
+
+.copy-code-only-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #c5c5c5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.copy-code-only-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.copy-code-only-btn.copied {
+  background-color: rgba(39, 201, 63, 0.2) !important;
+  border-color: #27c93f !important;
+  color: #27c93f !important;
 }
 
 .code-container pre { 
@@ -320,26 +302,30 @@ header a {
   padding: 1.2rem 1rem !important; 
   background: transparent !important; 
   overflow-x: auto;
-  white-space: pre-wrap;       
-  word-wrap: break-word;       
-  word-break: break-word;
+  white-space: pre;
+  word-wrap: normal;           
+  word-break: normal;          
 }
 
 .code-container code { 
   font-family: 'Consolas', monospace !important; 
   font-size: 0.9rem !important; 
   color: #d4d4d4; 
-  white-space: pre-wrap;       
+  white-space: pre;            
 }
 
-/* ===== BARRE DE SAISIE ===== */
+/* ===== BARRE DE SAISIE / FOOTER ===== */
 #input-area {
   background-color: white;
   border-top: 1px solid rgba(224, 122, 95, 0.15);
   padding: 0.8rem 1rem;
   width: 100%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -4px 20px rgba(94, 48, 35, 0.05); 
 }
 
+/* PANNEAU DES OPTIONS DE GENERATION */
 #generation-options {
   max-width: 800px;
   margin: 0 auto 0.6rem auto;
@@ -372,10 +358,11 @@ header a {
   font-weight: 500;
 }
 
+/* ZONE D'APERÇU */
 #preview-container {
   max-width: 800px;
   margin: 0 auto 0.5rem auto;
-  display: none !important; 
+  display: none; 
   align-items: center;
   gap: 10px;
   background: #FDF0E6;
@@ -397,6 +384,7 @@ header a {
   align-items: flex-end; 
 }
 
+/* CHAMP TEXTAREA EXTENSIBLE DESIGN ET RETOURS À LA LIGNE CORRIGÉS */
 #user-input {
   flex: 1;
   padding: 0.7rem 1.1rem;
@@ -412,6 +400,7 @@ header a {
   max-height: 120px;           
   line-height: 1.4;
   overflow-y: auto;            
+  /* CORRECTIFS POUR LE RETOUR À LA LIGNE VISUEL */
   white-space: pre-wrap;       
   word-wrap: break-word;       
   word-break: break-word;      
