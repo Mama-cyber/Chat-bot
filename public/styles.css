@@ -222,8 +222,9 @@ header a {
   border-bottom-right-radius: 5px;
 }
 
-/* CORRECTIF COULEUR CONSTANTE POUR LA BULLE DE L'IA */
+/* BLOCAGE ABSOLU DE LA COULEUR VISUELLE DE L'IA EN BLANC PUR */
 .bot-message {
+  background: #ffffff !important;
   background-color: #ffffff !important;
   color: var(--text);
   border: 1px solid rgba(224, 122, 95, 0.15);
@@ -232,7 +233,8 @@ header a {
 }
 
 .bot-message-content {
-  background-color: transparent !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 .error-message {
