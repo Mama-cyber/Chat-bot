@@ -80,7 +80,7 @@
     let isGenerating = false; 
     let currentAbortController = null; 
 
-    // CONFIGURATION DE MARKED POUR INJECTER LA SECTION ET LE BOUTON "COPIER LE CODE"
+    // CONFIGURATION DE MARKED
     const renderer = new marked.Renderer();
     renderer.code = function(code, infostring) {
       const lang = infostring || 'code';
@@ -203,7 +203,7 @@
       currentChatId = 'chat_' + Date.now();
       allChats[currentChatId] = {
         title: "Nouvelle discussion",
-        history: [{ role: "assistant", content: "Bonjour, comment puis-je vous aider aujourd'hui ?" }],
+        history: [{ role: "assistant", content: "Bonjour, comment puis-je vous aider aujourd'hui ?", feedback: null }],
         updatedAt: Date.now()
       };
       saveToStorage();
@@ -217,14 +217,20 @@
       const chatContainer = document.getElementById('chat-container');
       chatContainer.innerHTML = '';
       
-      allChats[id].history.forEach(msg => {
+      allChats[id].history.forEach((msg, index) => {
+        let msgElement;
         if (msg.role === 'user' && Array.isArray(msg.content)) {
-          displayMessage('user', msg.content[0].text, true);
+          msgElement = displayMessage('user', msg.content[0].text, true);
         } else if (msg.role === 'user' && msg.content.includes("Voici le contenu du fichier joint")) {
           const extraction = msg.content.split('\n\nQuestion : ')[1] || "Analyse de document";
-          displayMessage('user', `[Document joint] ${extraction}`, true);
+          msgElement = displayMessage('user', `[Document joint] ${extraction}`, true);
         } else {
-          displayMessage(msg.role, msg.content, true);
+          msgElement = displayMessage(msg.role, msg.content, true);
+        }
+
+        // On attache la barre d'actions si c'est l'assistant
+        if (msg.role === 'assistant') {
+          addBotActions(msgElement, msg.content, index, msg.feedback);
         }
       });
       chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -312,7 +318,11 @@
         button.innerHTML = `<i class="fas fa-check"></i>`;
         setTimeout(() => {
           button.classList.remove('copied');
-          button.innerHTML = `<i class="fas fa-copy"></i>`;
+          if (button.classList.contains('action-btn')) {
+             button.innerHTML = `<i class="fas fa-copy"></i>`;
+          } else {
+             button.innerHTML = `<i class="fas fa-copy"></i>`;
+          }
         }, 2000);
       }).catch(err => { console.error(err); });
     }
@@ -323,27 +333,97 @@
       
       if (role === 'user') {
         msgDiv.className = 'message user-message';
+        msgDiv.innerHTML = `
+          <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
+          <div class="message-text-content"><i class="fas fa-user me-1"></i> <span class="render-zone"></span></div>
+        `;
+        msgDiv.querySelector('.render-zone').textContent = text;
+        msgDiv.querySelector('.copy-btn').onclick = function() { copyText(this, text); };
       } else {
         msgDiv.className = 'message bot-message';
-      }
-      
-      let htmlContent = role === 'user' ? `<i class="fas fa-user me-1"></i> ` : `<i class="fas fa-robot me-1"></i> `;
-      
-      msgDiv.innerHTML = `
-        <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
-        <div class="message-text-content">${htmlContent}<span class="render-zone"></span></div>
-      `;
-      
-      if (role === 'user') {
-        msgDiv.querySelector('.render-zone').textContent = text;
-      } else {
+        msgDiv.innerHTML = `
+          <div class="message-text-content"><i class="fas fa-robot me-1"></i> <span class="render-zone"></span></div>
+        `;
         msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
       }
       
-      msgDiv.querySelector('.copy-btn').onclick = function() { copyText(this, text); };
       chatContainer.appendChild(msgDiv);
       if(!isHistoryLoad) chatContainer.scrollTop = chatContainer.scrollHeight;
       return msgDiv;
+    }
+
+    // FONCTION POUR AJOUTER LES BOUTONS SOUS LA RÉPONSE DE L'IA
+    function addBotActions(msgDiv, text, index, currentFeedback = null) {
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'bot-actions';
+      
+      actionsDiv.innerHTML = `
+        <button class="action-btn" title="Copier la réponse"><i class="fas fa-copy"></i></button>
+        <button class="action-btn like-btn" title="Bonne réponse"><i class="far fa-thumbs-up"></i></button>
+        <button class="action-btn dislike-btn" title="Mauvaise réponse"><i class="far fa-thumbs-down"></i></button>
+        <button class="action-btn share-btn" title="Partager"><i class="fas fa-share-alt"></i></button>
+      `;
+
+      const copyBtn = actionsDiv.querySelector('.action-btn[title="Copier la réponse"]');
+      const likeBtn = actionsDiv.querySelector('.like-btn');
+      const dislikeBtn = actionsDiv.querySelector('.dislike-btn');
+      const shareBtn = actionsDiv.querySelector('.share-btn');
+
+      // Init UI based on saved feedback
+      updateFeedbackUI(likeBtn, dislikeBtn, currentFeedback);
+
+      // Evenements
+      copyBtn.onclick = function() { copyText(this, text); };
+
+      likeBtn.onclick = function() {
+        const isLiked = allChats[currentChatId].history[index].feedback === 'like';
+        allChats[currentChatId].history[index].feedback = isLiked ? null : 'like';
+        saveToStorage();
+        updateFeedbackUI(likeBtn, dislikeBtn, allChats[currentChatId].history[index].feedback);
+      };
+
+      dislikeBtn.onclick = function() {
+        const isDisliked = allChats[currentChatId].history[index].feedback === 'dislike';
+        allChats[currentChatId].history[index].feedback = isDisliked ? null : 'dislike';
+        saveToStorage();
+        updateFeedbackUI(likeBtn, dislikeBtn, allChats[currentChatId].history[index].feedback);
+      };
+
+      shareBtn.onclick = async function() {
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Réponse Axiom',
+              text: text
+            });
+          } catch (err) { console.log("Partage annulé ou échoué", err); }
+        } else {
+          // Fallback sur PC s'il n'y a pas d'API share
+          copyText(this, text);
+          alert("La fonction de partage natif n'est pas supportée. Le texte a été copié dans le presse-papier !");
+        }
+      };
+
+      msgDiv.appendChild(actionsDiv);
+    }
+
+    function updateFeedbackUI(likeBtn, dislikeBtn, feedback) {
+      if (feedback === 'like') {
+        likeBtn.classList.add('active');
+        likeBtn.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+        dislikeBtn.classList.remove('active');
+        dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
+      } else if (feedback === 'dislike') {
+        dislikeBtn.classList.add('active');
+        dislikeBtn.innerHTML = '<i class="fas fa-thumbs-down"></i>';
+        likeBtn.classList.remove('active');
+        likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
+      } else {
+        likeBtn.classList.remove('active');
+        likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
+        dislikeBtn.classList.remove('active');
+        dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
+      }
     }
 
     function handleActionClick() {
@@ -415,7 +495,6 @@
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot-message';
       botMessage.innerHTML = `
-        <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">
           <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom se connecte...</span>
         </div>
@@ -489,12 +568,13 @@
         }
       } finally {
         if (fullResponseText.trim() !== "") {
-          botMessage.querySelector('.copy-btn').onclick = function() {
-            copyText(this, fullResponseText);
-          };
-          allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
+          allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText, feedback: null });
+          const msgIndex = allChats[currentChatId].history.length - 1;
           allChats[currentChatId].updatedAt = Date.now();
           saveToStorage();
+          
+          // On ajoute les boutons d'action de l'IA une fois le flux terminé
+          addBotActions(botMessage, fullResponseText, msgIndex);
         }
         finalizeGenerationState();
       }
