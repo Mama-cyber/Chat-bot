@@ -378,15 +378,46 @@
         msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
         messageWrapper.appendChild(msgDiv);
         
+        // RECRÉATION SÉCURISÉE DES BOUTONS SANS BRISER LE HTML NI LE FOND BLANC
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'bot-actions-toolbar';
-        actionsDiv.innerHTML = `
-          <button class="action-tool-btn" title="Liker" onclick="handleLike(this)"><i class="far fa-thumbs-up"></i></button>
-          <button class="action-tool-btn" title="Disliker" onclick="handleDislike(this)"><i class="far fa-thumbs-down"></i></button>
-          <button class="action-tool-btn" title="Régénérer la réponse" onclick="handleRegenerate()"><i class="fas fa-redo-alt"></i></button>
-          <button class="action-tool-btn" title="Copier tout le message" onclick="copyText(this, \`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)"><i class="far fa-copy"></i></button>
-          <button class="action-tool-btn" title="Partager" onclick="handleShare(\`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)"><i class="fas fa-ellipsis-h"></i></button>
-        `;
+        
+        const likeBtn = document.createElement('button');
+        likeBtn.className = 'action-tool-btn';
+        likeBtn.title = 'Liker';
+        likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
+        likeBtn.onclick = function() { handleLike(this); };
+
+        const dislikeBtn = document.createElement('button');
+        dislikeBtn.className = 'action-tool-btn';
+        dislikeBtn.title = 'Disliker';
+        dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
+        dislikeBtn.onclick = function() { handleDislike(this); };
+
+        const regenBtn = document.createElement('button');
+        regenBtn.className = 'action-tool-btn';
+        regenBtn.title = 'Régénérer la réponse';
+        regenBtn.innerHTML = '<i class="fas fa-redo-alt"></i>';
+        regenBtn.onclick = function() { handleRegenerate(); };
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'action-tool-btn';
+        copyBtn.title = 'Copier tout le message';
+        copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+        copyBtn.onclick = function() { copyText(this, text); };
+
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'action-tool-btn';
+        shareBtn.title = 'Partager';
+        shareBtn.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
+        shareBtn.onclick = function() { handleShare(text); };
+
+        actionsDiv.appendChild(likeBtn);
+        actionsDiv.appendChild(dislikeBtn);
+        actionsDiv.appendChild(regenBtn);
+        actionsDiv.appendChild(copyBtn);
+        actionsDiv.appendChild(shareBtn);
+        
         messageWrapper.appendChild(actionsDiv);
       }
       
