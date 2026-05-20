@@ -283,7 +283,6 @@
       }).catch(err => { console.error(err); });
     }
 
-    // NOUVELLES FONCTIONS D'INTERACTION POUR L'ASSISTANT
     function handleLike(button) {
       const parent = button.parentElement;
       const dislikeBtn = parent.querySelector('.fa-thumbs-down').parentElement;
@@ -325,7 +324,6 @@
           text: textToShare
         }).catch(console.error);
       } else {
-        // Option de secours si l'API de partage n'est pas supportée par le navigateur
         navigator.clipboard.writeText(textToShare);
         alert("Lien de partage indisponible. Le texte a été copié dans votre presse-papiers !");
       }
@@ -335,17 +333,14 @@
       if (isGenerating) return;
       
       const history = allChats[currentChatId].history;
-      // Retirer la dernière réponse de l'assistant s'il y en a une
       if (history.length > 0 && history[history.length - 1].role === 'assistant') {
         history.pop();
       }
       
-      // Recharger visuellement le chat privé de sa dernière bulle robot
       loadChat(currentChatId);
       
-      // Simuler l'envoi en reprenant le dernier message de l'utilisateur stocké
       if (history.length > 0) {
-        const lastUserMsg = history.pop(); // On le pop temporairement pour que sendMessage le rajoute proprement
+        const lastUserMsg = history.pop(); 
         let textToSend = "";
         
         if (Array.isArray(lastUserMsg.content)) {
@@ -361,11 +356,9 @@
       }
     }
 
-    // MODIFICATION POUR ACCUEILLIR L'ENVELOPPE DE MESSAGE + LES ACTIONS EN-DESSOUS
     function displayMessage(role, text, isHistoryLoad = false) {
       const chatContainer = document.getElementById('chat-container');
       
-      // Conteneur global du message (Bulle + Barre d'outils optionnelle)
       const messageWrapper = document.createElement('div');
       messageWrapper.className = `message-wrapper ${role}-wrapper`;
 
@@ -385,7 +378,6 @@
         msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
         messageWrapper.appendChild(msgDiv);
         
-        // Ajout de la barre d'outils d'actions sous la réponse de l'IA
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'bot-actions-toolbar';
         actionsDiv.innerHTML = `
@@ -469,7 +461,6 @@
       input.value = '';
       resetTextareaHeight();
 
-      // Création de l'enveloppe temporaire pour le chargement du bot
       const temporaryWrapper = document.createElement('div');
       temporaryWrapper.className = 'message-wrapper bot-wrapper';
 
@@ -528,8 +519,7 @@
                   return;
                 }
 
-                if (parsed.content) {
-                  fullResponseText += parsed.content;
+                if (parsed.content) { FullResponseText += parsed.content;
                   renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
                   chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
@@ -549,7 +539,6 @@
           botMessage.className = 'message error-message';
         }
       } finally {
-        // On supprime la bulle temporaire et on réaffiche le message complet avec sa barre d'outils
         temporaryWrapper.remove();
         if (fullResponseText.trim() !== "") {
           allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
