@@ -1,591 +1,641 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Axiom</title>
-  <link rel="icon" type="image/png" href="logo-Axiom.png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Axiom</title>
+    <link rel="icon" type="image/png" href="logo-Axiom.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  </head>
+  <body>
+    <div id="app-container">
+      <aside id="sidebar">
+        <button id="new-chat-btn" onclick="startNewChat()">
+          <i class="fas fa-plus"></i> Nouveau chat
+        </button>
+        <div id="history-list"></div>
+      </aside>
 
-  <div id="app-container">
-    
-    <aside id="sidebar">
-      <button id="new-chat-btn" onclick="startNewChat()">
-        <i class="fas fa-plus"></i> Nouveau chat
-      </button>
-      <div id="history-list">
-      </div>
-    </aside>
+      <main id="main-chat">
+        <header>
+          <button id="menu-toggle" onclick="toggleSidebar(event)">
+            <i class="fas fa-bars"></i>
+          </button>
+          <a href="https://mon-chatbot-ia.onrender.com/"><h1>Axiom</h1></a>
+        </header>
 
-    <main id="main-chat">
-      <header>
-        <button id="menu-toggle" onclick="toggleSidebar(event)"><i class="fas fa-bars"></i></button>
-        <h1>Axiom</h1>
-      </header>
+        <div id="chat-container"></div>
 
-      <div id="chat-container">
-      </div>
-
-      <div id="input-area">
-        <div id="generation-options">
-          <div class="option-select-group">
-            <i class="fas fa-text-height"></i>
-            <select id="option-length">
-              <option value="court">Court</option>
-              <option value="moyen" selected>Moyen</option>
-              <option value="long">Long</option>
-            </select>
-          </div>
-          <div class="option-select-group">
-            <i class="fas fa-graduation-cap"></i>
-            <select id="option-level">
-              <option value="debutant" selected>Débutant</option>
-              <option value="expert">Expert</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="preview-container">
-          <span id="preview-content"></span>
-          <i class="fas fa-times" id="remove-file" onclick="clearFile()"></i>
-        </div>
-
-        <div id="input-container">
-          <label class="file-upload-btn" for="file-input">
-            <i class="fas fa-paperclip"></i>
-          </label>
-          <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)">
-
-          <textarea id="user-input" placeholder="Écrivez votre message..." rows="1"></textarea>
-          <button id="send-button" onclick="handleActionClick()"><i class="fas fa-paper-plane" id="button-icon"></i></button>
-        </div>
-      </div>
-    </main>
-
-  </div>
-
-  <script>
-    let selectedFile = null;
-    
-    // STRUCTURE MULTI-CHATS
-    let allChats = JSON.parse(localStorage.getItem('axiom_chats')) || {};
-    let currentChatId = null;
-
-    // VARIABLES DE CONTRÔLE
-    let isGenerating = false; 
-    let currentAbortController = null; 
-
-    // CONFIGURATION DE MARKED
-    const renderer = new marked.Renderer();
-    renderer.code = function(code, infostring) {
-      const lang = infostring || 'code';
-      const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      
-      return `
-        <div class="code-container">
-          <div class="code-header">
-            <div class="code-buttons">
-              <span class="code-dot red"></span>
-              <span class="code-dot yellow"></span>
-              <span class="code-dot green"></span>
+        <div id="input-area">
+          <div id="generation-options">
+            <div class="option-select-group">
+              <i class="fas fa-text-height"></i>
+              <select id="option-length">
+                <option value="court">Court</option>
+                <option value="moyen" selected>Moyen</option>
+                <option value="long">Long</option>
+              </select>
             </div>
-            <span class="code-lang">${lang}</span>
-            <button class="copy-code-only-btn" onclick="copyOnlyCode(this, \`${escapedCode}\`)">
-              <i class="fas fa-copy"></i> Copier le code
+            <div class="option-select-group">
+              <i class="fas fa-graduation-cap"></i>
+              <select id="option-level">
+                <option value="debutant" selected>Débutant</option>
+                <option value="expert">Expert</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="preview-container">
+            <span id="preview-content"></span>
+            <i class="fas fa-times" id="remove-file" onclick="clearFile()"></i>
+          </div>
+
+          <div id="input-container">
+            <label class="file-upload-btn" for="file-input">
+              <i class="fas fa-paperclip"></i>
+            </label>
+            <input
+              type="file"
+              id="file-input"
+              style="display: none"
+              onchange="handleFileSelect(this)"
+            />
+
+            <textarea
+              id="user-input"
+              placeholder="Écrivez votre message..."
+              rows="1"
+            ></textarea>
+            <button id="send-button" onclick="handleActionClick()">
+              <i class="fas fa-paper-plane" id="button-icon"></i>
             </button>
           </div>
-          <pre><code class="language-${lang}">${code}</code></pre>
         </div>
-      `;
-    };
-    marked.setOptions({ renderer: renderer });
+      </main>
+    </div>
 
-    window.onload = function() {
-      renderSidebar();
-      initTextareaAutoResize();
-      if (Object.keys(allChats).length > 0) {
-        const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
-        loadChat(sortedIds[0]);
-      } else {
-        startNewChat();
-      }
-    };
+    <script>
+      let selectedFile = null;
 
-    function copyOnlyCode(button, textToCopy) {
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        button.classList.add('copied');
-        button.innerHTML = `<i class="fas fa-check"></i> Copié !`;
-        setTimeout(() => {
-          button.classList.remove('copied');
-          button.innerHTML = `<i class="fas fa-copy"></i> Copier le code`;
-        }, 2000);
-      }).catch(err => { console.error(err); });
-    }
+      // STRUCTURE MULTI-CHATS
+      let allChats = JSON.parse(localStorage.getItem("axiom_chats")) || {};
+      let currentChatId = null;
 
-    function initTextareaAutoResize() {
-      const textarea = document.getElementById('user-input');
-      
-      textarea.addEventListener('input', function() {
-        this.style.height = '42px'; 
-        this.style.height = (this.scrollHeight) + 'px'; 
-      });
+      // VARIABLES DE CONTRÔLE
+      let isGenerating = false;
+      let currentAbortController = null;
 
-      textarea.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          handleActionClick();
+      window.onload = function () {
+        renderSidebar();
+        initTextareaAutoResize();
+        if (Object.keys(allChats).length > 0) {
+          const sortedIds = Object.keys(allChats).sort(
+            (a, b) => allChats[b].updatedAt - allChats[a].updatedAt,
+          );
+          loadChat(sortedIds[0]);
+        } else {
+          startNewChat();
         }
-      });
-    }
-
-    function resetTextareaHeight() {
-      const textarea = document.getElementById('user-input');
-      textarea.style.height = '42px';
-    }
-
-    document.addEventListener('click', function(event) {
-      if (window.innerWidth <= 768) {
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.getElementById('menu-toggle');
-        
-        if (sidebar.classList.contains('open') && 
-            !sidebar.contains(event.target) && 
-            !menuToggle.contains(event.target)) {
-          sidebar.classList.remove('open');
-        }
-      }
-    });
-
-    function renderSidebar() {
-      const listContainer = document.getElementById('history-list');
-      listContainer.innerHTML = '';
-      
-      const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
-      
-      sortedIds.forEach(id => {
-        const item = document.createElement('div');
-        item.className = `history-item ${id === currentChatId ? 'active' : ''}`;
-        
-        const textSpan = document.createElement('span');
-        textSpan.className = 'history-item-text';
-        textSpan.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
-        textSpan.onclick = () => {
-          if (isGenerating) return; 
-          loadChat(id);
-          if(window.innerWidth <= 768) {
-            document.getElementById('sidebar').classList.remove('open');
-          }
-        };
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-chat-btn';
-        deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
-        deleteBtn.title = "Supprimer cette discussion";
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation();
-          if (isGenerating) return;
-          deleteChat(id);
-        };
-
-        item.appendChild(textSpan);
-        item.appendChild(deleteBtn);
-        listContainer.appendChild(item);
-      });
-    }
-
-    function startNewChat() {
-      if (isGenerating) return;
-      currentChatId = 'chat_' + Date.now();
-      allChats[currentChatId] = {
-        title: "Nouvelle discussion",
-        history: [{ role: "assistant", content: "Bonjour, comment puis-je vous aider aujourd'hui ?", feedback: null }],
-        updatedAt: Date.now()
       };
-      saveToStorage();
-      loadChat(currentChatId);
-    }
 
-    function loadChat(id) {
-      currentChatId = id;
-      renderSidebar();
-      
-      const chatContainer = document.getElementById('chat-container');
-      chatContainer.innerHTML = '';
-      
-      allChats[id].history.forEach((msg, index) => {
-        let msgElement;
-        if (msg.role === 'user' && Array.isArray(msg.content)) {
-          msgElement = displayMessage('user', msg.content[0].text, true);
-        } else if (msg.role === 'user' && msg.content.includes("Voici le contenu du fichier joint")) {
-          const extraction = msg.content.split('\n\nQuestion : ')[1] || "Analyse de document";
-          msgElement = displayMessage('user', `[Document joint] ${extraction}`, true);
-        } else {
-          msgElement = displayMessage(msg.role, msg.content, true);
-        }
+      function initTextareaAutoResize() {
+        const textarea = document.getElementById("user-input");
 
-        // On attache la barre d'actions si c'est l'assistant
-        if (msg.role === 'assistant') {
-          addBotActions(msgElement, msg.content, index, msg.feedback);
+        textarea.addEventListener("input", function () {
+          this.style.height = "42px";
+          this.style.height = this.scrollHeight + "px";
+        });
+
+        textarea.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleActionClick();
+          }
+        });
+      }
+
+      function resetTextareaHeight() {
+        const textarea = document.getElementById("user-input");
+        textarea.style.height = "42px";
+      }
+
+      document.addEventListener("click", function (event) {
+        if (window.innerWidth <= 768) {
+          const sidebar = document.getElementById("sidebar");
+          const menuToggle = document.getElementById("menu-toggle");
+
+          if (
+            sidebar.classList.contains("open") &&
+            !sidebar.contains(event.target) &&
+            !menuToggle.contains(event.target)
+          ) {
+            sidebar.classList.remove("open");
+          }
         }
       });
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
 
-    function deleteChat(id) {
-      if (confirm("Voulez-vous vraiment supprimer cette discussion ?")) {
-        delete allChats[id];
+      function renderSidebar() {
+        const listContainer = document.getElementById("history-list");
+        listContainer.innerHTML = "";
+
+        const sortedIds = Object.keys(allChats).sort(
+          (a, b) => allChats[b].updatedAt - allChats[a].updatedAt,
+        );
+
+        sortedIds.forEach((id) => {
+          const item = document.createElement("div");
+          item.className = `history-item ${id === currentChatId ? "active" : ""}`;
+
+          const textSpan = document.createElement("span");
+          textSpan.className = "history-item-text";
+          textSpan.innerHTML = `<i class="fas fa-comment-alt"></i> ${allChats[id].title}`;
+          textSpan.onclick = () => {
+            if (isGenerating) return;
+            loadChat(id);
+            if (window.innerWidth <= 768) {
+              document.getElementById("sidebar").classList.remove("open");
+            }
+          };
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "delete-chat-btn";
+          deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
+          deleteBtn.title = "Supprimer cette discussion";
+          deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (isGenerating) return;
+            deleteChat(id);
+          };
+
+          item.appendChild(textSpan);
+          item.appendChild(deleteBtn);
+          listContainer.appendChild(item);
+        });
+      }
+
+      function startNewChat() {
+        if (isGenerating) return;
+        currentChatId = "chat_" + Date.now();
+        allChats[currentChatId] = {
+          title: "Nouvelle discussion",
+          history: [
+            {
+              role: "assistant",
+              content: "Bonjour, comment puis-je vous aider aujourd'hui ?",
+              feedback: null,
+            },
+          ],
+          updatedAt: Date.now(),
+        };
         saveToStorage();
-        
-        if (currentChatId === id) {
-          const remainingIds = Object.keys(allChats);
-          if (remainingIds.length > 0) {
-            const nextChatId = remainingIds.sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt)[0];
-            loadChat(nextChatId);
+        loadChat(currentChatId);
+      }
+
+      function loadChat(id) {
+        currentChatId = id;
+        renderSidebar();
+
+        const chatContainer = document.getElementById("chat-container");
+        chatContainer.innerHTML = "";
+
+        allChats[id].history.forEach((msg, index) => {
+          let msgElement;
+          if (msg.role === "user" && Array.isArray(msg.content)) {
+            msgElement = displayMessage("user", msg.content[0].text, true);
+          } else if (
+            msg.role === "user" &&
+            msg.content.includes("Voici le contenu du fichier joint")
+          ) {
+            const extraction =
+              msg.content.split("\n\nQuestion : ")[1] || "Analyse de document";
+            msgElement = displayMessage(
+              "user",
+              `[Document joint] ${extraction}`,
+              true,
+            );
           } else {
-            startNewChat();
+            msgElement = displayMessage(msg.role, msg.content, true);
           }
-        } else {
-          renderSidebar();
+
+          if (msg.role === "assistant") {
+            addBotActions(msgElement, msg.content, index, msg.feedback);
+          }
+        });
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      function deleteChat(id) {
+        if (confirm("Voulez-vous vraiment supprimer cette discussion ?")) {
+          delete allChats[id];
+          saveToStorage();
+
+          if (currentChatId === id) {
+            const remainingIds = Object.keys(allChats);
+            if (remainingIds.length > 0) {
+              const nextChatId = remainingIds.sort(
+                (a, b) => allChats[b].updatedAt - allChats[a].updatedAt,
+              )[0];
+              loadChat(nextChatId);
+            } else {
+              startNewChat();
+            }
+          } else {
+            renderSidebar();
+          }
         }
       }
-    }
 
-    function saveToStorage() {
-      localStorage.setItem('axiom_chats', JSON.stringify(allChats));
-    }
-
-    function toggleSidebar(event) {
-      if(event) event.stopPropagation();
-      const sidebar = document.getElementById('sidebar');
-      if (window.innerWidth <= 768) {
-        sidebar.classList.toggle('open');
-      } else {
-        sidebar.classList.toggle('closed');
+      function saveToStorage() {
+        localStorage.setItem("axiom_chats", JSON.stringify(allChats));
       }
-    }
 
-    function handleFileSelect(input) {
-      const file = input.files[0];
-      if (!file) return;
-
-      selectedFile = { name: file.name, type: file.type };
-      const reader = new FileReader();
-      const previewContainer = document.getElementById("preview-container");
-      const previewContent = document.getElementById("preview-content");
-
-      if (file.type.startsWith("image/")) {
-        reader.onload = function(e) {
-          selectedFile.base64 = e.target.result;
-          previewContent.innerHTML = `<img src="${e.target.result}"> <span>${file.name}</span>`;
-          previewContainer.style.setProperty('display', 'flex', 'important');
-        };
-        reader.readAsDataURL(file);
-      } else {
-        reader.onload = function(e) {
-          let rawText = e.target.result;
-          let cleanText = rawText.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-          cleanText = cleanText.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-          cleanText = cleanText.replace(/<[^>]+>/g, ' '); 
-          cleanText = cleanText.replace(/[^a-zA-Z0-9àâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ\s.,!?;:()'\-""\n]/g, ' ');
-          cleanText = cleanText.replace(/\s+/g, ' ').trim(); 
-
-          if (cleanText.length > 80000) {
-            cleanText = cleanText.substring(0, 80000) + "... [Texte extrait et condensé]";
-          }
-
-          selectedFile.text = cleanText;
-          previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name}</span>`;
-          previewContainer.style.setProperty('display', 'flex', 'important');
-        };
-        reader.readAsText(file);
+      function toggleSidebar(event) {
+        if (event) event.stopPropagation();
+        const sidebar = document.getElementById("sidebar");
+        if (window.innerWidth <= 768) {
+          sidebar.classList.toggle("open");
+        } else {
+          sidebar.classList.toggle("closed");
+        }
       }
-    }
 
-    function clearFile() {
-      selectedFile = null;
-      document.getElementById("file-input").value = "";
-      document.getElementById("preview-container").style.setProperty('display', 'none', 'important');
-    }
+      function handleFileSelect(input) {
+        const file = input.files[0];
+        if (!file) return;
 
-    function copyText(button, textToCopy) {
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        button.classList.add('copied');
-        button.innerHTML = `<i class="fas fa-check"></i>`;
-        setTimeout(() => {
-          button.classList.remove('copied');
-          if (button.classList.contains('action-btn')) {
-             button.innerHTML = `<i class="fas fa-copy"></i>`;
-          } else {
-             button.innerHTML = `<i class="fas fa-copy"></i>`;
-          }
-        }, 2000);
-      }).catch(err => { console.error(err); });
-    }
+        selectedFile = { name: file.name, type: file.type };
+        const reader = new FileReader();
+        const previewContainer = document.getElementById("preview-container");
+        const previewContent = document.getElementById("preview-content");
 
-    function displayMessage(role, text, isHistoryLoad = false) {
-      const chatContainer = document.getElementById('chat-container');
-      const msgDiv = document.createElement('div');
-      
-      if (role === 'user') {
-        msgDiv.className = 'message user-message';
-        msgDiv.innerHTML = `
-          <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
+        if (file.type.startsWith("image/")) {
+          reader.onload = function (e) {
+            selectedFile.base64 = e.target.result;
+            previewContent.innerHTML = `<img src="${e.target.result}"> <span>${file.name}</span>`;
+            previewContainer.style.setProperty("display", "flex", "important");
+          };
+          reader.readAsDataURL(file);
+        } else {
+          reader.onload = function (e) {
+            let rawText = e.target.result;
+            let cleanText = rawText.replace(
+              /<style[^>]*>[\s\S]*?<\/style>/gi,
+              "",
+            );
+            cleanText = cleanText.replace(
+              /<script[^>]*>[\s\S]*?<\/script>/gi,
+              "",
+            );
+            cleanText = cleanText.replace(/<[^>]+>/g, " ");
+            cleanText = cleanText.replace(
+              /[^a-zA-Z0-9àâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ\s.,!?;:()'\-""\n]/g,
+              " ",
+            );
+            cleanText = cleanText.replace(/\s+/g, " ").trim();
+
+            if (cleanText.length > 80000) {
+              cleanText =
+                cleanText.substring(0, 80000) +
+                "... [Texte extrait et condensé]";
+            }
+
+            selectedFile.text = cleanText;
+            previewContent.innerHTML = `<i class="fas fa-file-alt"></i> <span>${file.name}</span>`;
+            previewContainer.style.setProperty("display", "flex", "important");
+          };
+          reader.readAsText(file);
+        }
+      }
+
+      function clearFile() {
+        selectedFile = null;
+        document.getElementById("file-input").value = "";
+        document
+          .getElementById("preview-container")
+          .style.setProperty("display", "none", "important");
+      }
+
+      function copyText(button, textToCopy) {
+        navigator.clipboard
+          .writeText(textToCopy)
+          .then(() => {
+            button.classList.add("copied");
+            button.innerHTML = `<i class="fas fa-check"></i>`;
+            setTimeout(() => {
+              button.classList.remove("copied");
+              button.innerHTML = `<i class="fas fa-copy"></i>`;
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+      }
+
+      function displayMessage(role, text, isHistoryLoad = false) {
+        const chatContainer = document.getElementById("chat-container");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${role}-message`;
+
+        if (role === "user") {
+          msgDiv.innerHTML = `
+          <button class="copy-btn" title="Copier le prompt"><i class="fas fa-copy"></i></button>
           <div class="message-text-content"><i class="fas fa-user me-1"></i> <span class="render-zone"></span></div>
         `;
-        msgDiv.querySelector('.render-zone').textContent = text;
-        msgDiv.querySelector('.copy-btn').onclick = function() { copyText(this, text); };
-      } else {
-        msgDiv.className = 'message bot-message';
-        msgDiv.innerHTML = `
+          msgDiv.querySelector(".render-zone").textContent = text;
+          msgDiv.querySelector(".copy-btn").onclick = function () {
+            copyText(this, text);
+          };
+        } else {
+          msgDiv.innerHTML = `
           <div class="message-text-content"><i class="fas fa-robot me-1"></i> <span class="render-zone"></span></div>
         `;
-        msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
-      }
-      
-      chatContainer.appendChild(msgDiv);
-      if(!isHistoryLoad) chatContainer.scrollTop = chatContainer.scrollHeight;
-      return msgDiv;
-    }
+          msgDiv.querySelector(".render-zone").innerHTML =
+            `<div class="bot-message-content">${marked.parse(text)}</div>`;
+        }
 
-    // FONCTION POUR AJOUTER LES BOUTONS SOUS LA RÉPONSE DE L'IA
-    function addBotActions(msgDiv, text, index, currentFeedback = null) {
-      const actionsDiv = document.createElement('div');
-      actionsDiv.className = 'bot-actions';
-      
-      actionsDiv.innerHTML = `
-        <button class="action-btn" title="Copier la réponse"><i class="fas fa-copy"></i></button>
-        <button class="action-btn like-btn" title="Bonne réponse"><i class="far fa-thumbs-up"></i></button>
-        <button class="action-btn dislike-btn" title="Mauvaise réponse"><i class="far fa-thumbs-down"></i></button>
+        chatContainer.appendChild(msgDiv);
+        if (!isHistoryLoad)
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        return msgDiv;
+      }
+
+      function addBotActions(msgDiv, text, index, currentFeedback = null) {
+        if (msgDiv.querySelector(".bot-actions")) return;
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "bot-actions";
+
+        actionsDiv.innerHTML = `
+        <button class="action-btn copy-bot-btn" title="Copier la réponse"><i class="fas fa-copy"></i></button>
+        <button class="action-btn like-btn" title="Bonne raisonnement"><i class="far fa-thumbs-up"></i></button>
+        <button class="action-btn dislike-btn" title="Mauvais raisonnement"><i class="far fa-thumbs-down"></i></button>
         <button class="action-btn share-btn" title="Partager"><i class="fas fa-share-alt"></i></button>
       `;
 
-      const copyBtn = actionsDiv.querySelector('.action-btn[title="Copier la réponse"]');
-      const likeBtn = actionsDiv.querySelector('.like-btn');
-      const dislikeBtn = actionsDiv.querySelector('.dislike-btn');
-      const shareBtn = actionsDiv.querySelector('.share-btn');
+        const copyBtn = actionsDiv.querySelector(".copy-bot-btn");
+        const likeBtn = actionsDiv.querySelector(".like-btn");
+        const dislikeBtn = actionsDiv.querySelector(".dislike-btn");
+        const shareBtn = actionsDiv.querySelector(".share-btn");
 
-      // Init UI based on saved feedback
-      updateFeedbackUI(likeBtn, dislikeBtn, currentFeedback);
+        updateFeedbackUI(likeBtn, dislikeBtn, currentFeedback);
 
-      // Evenements
-      copyBtn.onclick = function() { copyText(this, text); };
-
-      likeBtn.onclick = function() {
-        const isLiked = allChats[currentChatId].history[index].feedback === 'like';
-        allChats[currentChatId].history[index].feedback = isLiked ? null : 'like';
-        saveToStorage();
-        updateFeedbackUI(likeBtn, dislikeBtn, allChats[currentChatId].history[index].feedback);
-      };
-
-      dislikeBtn.onclick = function() {
-        const isDisliked = allChats[currentChatId].history[index].feedback === 'dislike';
-        allChats[currentChatId].history[index].feedback = isDisliked ? null : 'dislike';
-        saveToStorage();
-        updateFeedbackUI(likeBtn, dislikeBtn, allChats[currentChatId].history[index].feedback);
-      };
-
-      shareBtn.onclick = async function() {
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title: 'Réponse Axiom',
-              text: text
-            });
-          } catch (err) { console.log("Partage annulé ou échoué", err); }
-        } else {
-          // Fallback sur PC s'il n'y a pas d'API share
+        copyBtn.onclick = function () {
           copyText(this, text);
-          alert("La fonction de partage natif n'est pas supportée. Le texte a été copié dans le presse-papier !");
-        }
-      };
+        };
 
-      msgDiv.appendChild(actionsDiv);
-    }
+        likeBtn.onclick = function () {
+          const currentChat = allChats[currentChatId];
+          if (!currentChat || !currentChat.history[index]) return;
+          const isLiked = currentChat.history[index].feedback === "like";
+          currentChat.history[index].feedback = isLiked ? null : "like";
+          saveToStorage();
+          updateFeedbackUI(
+            likeBtn,
+            dislikeBtn,
+            currentChat.history[index].feedback,
+          );
+        };
 
-    function updateFeedbackUI(likeBtn, dislikeBtn, feedback) {
-      if (feedback === 'like') {
-        likeBtn.classList.add('active');
-        likeBtn.innerHTML = '<i class="fas fa-thumbs-up"></i>';
-        dislikeBtn.classList.remove('active');
-        dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
-      } else if (feedback === 'dislike') {
-        dislikeBtn.classList.add('active');
-        dislikeBtn.innerHTML = '<i class="fas fa-thumbs-down"></i>';
-        likeBtn.classList.remove('active');
-        likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
-      } else {
-        likeBtn.classList.remove('active');
-        likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
-        dislikeBtn.classList.remove('active');
-        dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
-      }
-    }
+        dislikeBtn.onclick = function () {
+          const currentChat = allChats[currentChatId];
+          if (!currentChat || !currentChat.history[index]) return;
+          const isDisliked = currentChat.history[index].feedback === "dislike";
+          currentChat.history[index].feedback = isDisliked ? null : "dislike";
+          saveToStorage();
+          updateFeedbackUI(
+            likeBtn,
+            dislikeBtn,
+            currentChat.history[index].feedback,
+          );
+        };
 
-    function handleActionClick() {
-      if (isGenerating) {
-        stopGeneration();
-      } else {
-        sendMessage();
-      }
-    }
+        shareBtn.onclick = function () {
+          if (navigator.share) {
+            navigator
+              .share({
+                title: "Réponse Axiom",
+                text: text,
+              })
+              .catch((err) => console.log(err));
+          } else {
+            navigator.clipboard.writeText(text).then(() => {
+              shareBtn.innerHTML = `<i class="fas fa-check"></i>`;
+              alert(
+                "Partage natif non supporté sur ce navigateur. La réponse a été copiée !",
+              );
+              setTimeout(() => {
+                shareBtn.innerHTML = `<i class="fas fa-share-alt"></i>`;
+              }, 2000);
+            });
+          }
+        };
 
-    function stopGeneration() {
-      if (currentAbortController) {
-        currentAbortController.abort(); 
-      }
-    }
-
-    async function sendMessage() {
-      const input = document.getElementById('user-input');
-      const chatContainer = document.getElementById('chat-container');
-      const messageText = input.value.trim();
-      const sendButton = document.getElementById('send-button');
-      const buttonIcon = document.getElementById('button-icon');
-      
-      const lengthOption = document.getElementById('option-length').value;
-      const levelOption = document.getElementById('option-level').value;
-      
-      if (!messageText && !selectedFile) return;
-
-      isGenerating = true;
-      buttonIcon.className = "fas fa-stop";
-      sendButton.style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
-
-      currentAbortController = new AbortController();
-      const { signal } = currentAbortController;
-
-      if (allChats[currentChatId].title === "Nouvelle discussion") {
-        allChats[currentChatId].title = messageText ? messageText.substring(0, 24) + "..." : "Analyse de fichier";
+        msgDiv.appendChild(actionsDiv);
       }
 
-      let viewText = messageText;
-      if (selectedFile) {
-        viewText = (selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `) + viewText;
-      }
-      displayMessage('user', viewText);
-
-      let contentStructure;
-      if (selectedFile) {
-        if (selectedFile.type.startsWith("image/")) {
-          contentStructure = [
-            { type: "text", text: messageText || "Analyse cette image." },
-            { type: "image_url", image_url: { url: selectedFile.base64 } }
-          ];
+      function updateFeedbackUI(likeBtn, dislikeBtn, feedback) {
+        if (feedback === "like") {
+          likeBtn.classList.add("active");
+          likeBtn.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+          dislikeBtn.classList.remove("active");
+          dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
+        } else if (feedback === "dislike") {
+          dislikeBtn.classList.add("active");
+          dislikeBtn.innerHTML = '<i class="fas fa-thumbs-down"></i>';
+          likeBtn.classList.remove("active");
+          likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
         } else {
-          contentStructure = `Voici le contenu du fichier joint (${selectedFile.name}) :\n---\n${selectedFile.text}\n---\n\nQuestion : ${messageText}`;
+          likeBtn.classList.remove("active");
+          likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
+          dislikeBtn.classList.remove("active");
+          dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
         }
-      } else {
-        contentStructure = messageText;
       }
 
-      allChats[currentChatId].history.push({ role: "user", content: contentStructure });
-      allChats[currentChatId].updatedAt = Date.now();
-      saveToStorage();
-      renderSidebar();
+      function handleActionClick() {
+        if (isGenerating) {
+          stopGeneration();
+        } else {
+          sendMessage();
+        }
+      }
 
-      clearFile();
-      input.value = '';
-      resetTextareaHeight();
+      function stopGeneration() {
+        if (currentAbortController) {
+          currentAbortController.abort();
+        }
+      }
 
-      const botMessage = document.createElement('div');
-      botMessage.className = 'message bot-message';
-      botMessage.innerHTML = `
+      async function sendMessage() {
+        const input = document.getElementById("user-input");
+        const chatContainer = document.getElementById("chat-container");
+        const messageText = input.value.trim();
+        const sendButton = document.getElementById("send-button");
+        const buttonIcon = document.getElementById("button-icon");
+
+        const lengthOption = document.getElementById("option-length").value;
+        const levelOption = document.getElementById("option-level").value;
+
+        if (!messageText && !selectedFile) return;
+
+        isGenerating = true;
+        buttonIcon.className = "fas fa-stop";
+        sendButton.style.background =
+          "linear-gradient(135deg, var(--secondary), var(--accent))";
+
+        currentAbortController = new AbortController();
+        const { signal } = currentAbortController;
+
+        if (allChats[currentChatId].title === "Nouvelle discussion") {
+          allChats[currentChatId].title = messageText
+            ? messageText.substring(0, 24) + "..."
+            : "Analyse de fichier";
+        }
+
+        let viewText = messageText;
+        if (selectedFile) {
+          viewText =
+            (selectedFile.type.startsWith("image/")
+              ? `[Image: ${selectedFile.name}] `
+              : `[Document: ${selectedFile.name}] `) + viewText;
+        }
+        displayMessage("user", viewText);
+
+        let contentStructure;
+        if (selectedFile) {
+          if (selectedFile.type.startsWith("image/")) {
+            contentStructure = [
+              { type: "text", text: messageText || "Analyse cette image." },
+              { type: "image_url", image_url: { url: selectedFile.base64 } },
+            ];
+          } else {
+            contentStructure = `Voici le contenu du fichier joint (${selectedFile.name}) :\n---\n${selectedFile.text}\n---\n\nQuestion : ${messageText}`;
+          }
+        } else {
+          contentStructure = messageText;
+        }
+
+        allChats[currentChatId].history.push({
+          role: "user",
+          content: contentStructure,
+        });
+        allChats[currentChatId].updatedAt = Date.now();
+        saveToStorage();
+        renderSidebar();
+
+        clearFile();
+        input.value = "";
+        resetTextareaHeight();
+
+        const botMessage = document.createElement("div");
+        botMessage.className = "message bot-message";
+        botMessage.innerHTML = `
         <div class="message-text-content">
           <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom se connecte...</span>
         </div>
       `;
-      chatContainer.appendChild(botMessage);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+        chatContainer.appendChild(botMessage);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
 
-      const renderZone = botMessage.querySelector('.render-zone');
-      let fullResponseText = ""; 
+        const renderZone = botMessage.querySelector(".render-zone");
+        let fullResponseText = "";
 
-      try {
-        const response = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            history: allChats[currentChatId].history,
-            options: { length: lengthOption, level: levelOption }
-          }),
-          signal: signal 
-        });
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              history: allChats[currentChatId].history,
+              options: { length: lengthOption, level: levelOption },
+            }),
+            signal: signal,
+          });
 
-        if (!response.ok) throw new Error("Erreur serveur");
+          if (!response.ok) throw new Error("Erreur serveur");
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let buffer = "";
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop();
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop();
 
-          for (const line of lines) {
-            const cleanedLine = line.trim();
-            if (!cleanedLine) continue;
-            if (cleanedLine === "data: [DONE]") continue;
+            for (const line of lines) {
+              const cleanedLine = line.trim();
+              if (!cleanedLine) continue;
+              if (cleanedLine === "data: [DONE]") continue;
 
-            if (cleanedLine.startsWith("data: ")) {
-              try {
-                const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
-                
-                if (parsed.error) {
-                  renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ${parsed.error}</span>`;
-                  botMessage.className = 'message error-message';
-                  finalizeGenerationState();
-                  return;
-                }
+              if (cleanedLine.startsWith("data: ")) {
+                try {
+                  const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
 
-                if (parsed.content) {
-                  fullResponseText += parsed.content;
-                  renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-                  chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
-              } catch (e) {}
+                  if (parsed.error) {
+                    renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ${parsed.error}</span>`;
+                    botMessage.className = "message error-message";
+                    finalizeGenerationState();
+                    return;
+                  }
+
+                  if (parsed.content) {
+                    fullResponseText += parsed.content;
+                    renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                  }
+                } catch (e) {}
+              }
             }
           }
-        }
+        } catch (error) {
+          if (error.name === "AbortError") {
+            console.log("Génération interrompue.");
+            fullResponseText += " *[Réponse interrompue]*";
+            renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+          } else {
+            console.error("Erreur de flux :", error);
+            renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux.</span>`;
+            botMessage.className = "message error-message";
+          }
+        } finally {
+          if (fullResponseText.trim() !== "") {
+            allChats[currentChatId].history.push({
+              role: "assistant",
+              content: fullResponseText,
+              feedback: null,
+            });
+            const msgIndex = allChats[currentChatId].history.length - 1;
+            allChats[currentChatId].updatedAt = Date.now();
+            saveToStorage();
 
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          console.log("Génération interrompue.");
-          fullResponseText += " *[Réponse interrompue]*";
-          renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-        } else {
-          console.error("Erreur de flux :", error);
-          renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux.</span>`;
-          botMessage.className = 'message error-message';
+            addBotActions(botMessage, fullResponseText, msgIndex);
+          }
+          finalizeGenerationState();
         }
-      } finally {
-        if (fullResponseText.trim() !== "") {
-          allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText, feedback: null });
-          const msgIndex = allChats[currentChatId].history.length - 1;
-          allChats[currentChatId].updatedAt = Date.now();
-          saveToStorage();
-          
-          // On ajoute les boutons d'action de l'IA une fois le flux terminé
-          addBotActions(botMessage, fullResponseText, msgIndex);
-        }
-        finalizeGenerationState();
       }
-    }
 
-    function finalizeGenerationState() {
-      isGenerating = false;
-      currentAbortController = null;
-      document.getElementById('button-icon').className = "fas fa-paper-plane";
-      document.getElementById('send-button').style.background = "linear-gradient(135deg, var(--secondary), var(--accent))";
-    }
-  </script>
-</body>
+      function finalizeGenerationState() {
+        isGenerating = false;
+        currentAbortController = null;
+        document.getElementById("button-icon").className = "fas fa-paper-plane";
+        document.getElementById("send-button").style.background =
+          "linear-gradient(135deg, var(--secondary), var(--accent))";
+      }
+    </script>
+  </body>
 </html>
