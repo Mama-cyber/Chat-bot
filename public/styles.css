@@ -189,7 +189,7 @@ header a {
   gap: 1.2rem;
 }
 
-/* ===== STRUCURE ET BULLES DES MESSAGES ===== */
+/* ===== STRUCTURE ET BULLES DES MESSAGES ===== */
 .message-wrapper {
   display: flex;
   flex-direction: column;
@@ -222,16 +222,21 @@ header a {
   border-bottom-right-radius: 5px;
 }
 
+/* CORRECTIF COULEUR CONSTANTE POUR LA BULLE DE L'IA */
 .bot-message {
-  background-color: white;
+  background-color: #ffffff !important;
   color: var(--text);
   border: 1px solid rgba(224, 122, 95, 0.15);
   border-bottom-left-radius: 5px;
   width: 100%;
 }
 
+.bot-message-content {
+  background-color: transparent !important;
+}
+
 .error-message {
-  background-color: #fce8e6;
+  background-color: #fce8e6 !important;
   border: 1px solid var(--danger);
   color: var(--danger);
   width: 100%;
@@ -405,6 +410,9 @@ header a {
   max-height: 120px;           
   line-height: 1.4;
   overflow-y: auto;            
+  white-space: pre-wrap;       
+  word-wrap: break-word;       
+  word-break: break-word;      
 }
 
 .file-upload-btn, #send-button {
