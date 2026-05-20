@@ -25,7 +25,7 @@
     <main id="main-chat">
       <header>
         <button id="menu-toggle" onclick="toggleSidebar(event)"><i class="fas fa-bars"></i></button>
-        <a href="https://mon-chatbot-ia.onrender.com/"><h1>Axiom</h1></a>
+        <h1>Axiom</h1>
       </header>
 
       <div id="chat-container">
@@ -80,9 +80,34 @@
     let isGenerating = false; 
     let currentAbortController = null; 
 
+    // CONFIGURATION DE MARKED POUR INJECTER LA SECTION ET LE BOUTON "COPIER LE CODE"
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, infostring) {
+      const lang = infostring || 'code';
+      const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      
+      return `
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-buttons">
+              <span class="code-dot red"></span>
+              <span class="code-dot yellow"></span>
+              <span class="code-dot green"></span>
+            </div>
+            <span class="code-lang">${lang}</span>
+            <button class="copy-code-only-btn" onclick="copyOnlyCode(this, \`${escapedCode}\`)">
+              <i class="fas fa-copy"></i> Copier le code
+            </button>
+          </div>
+          <pre><code class="language-${lang}">${code}</code></pre>
+        </div>
+      `;
+    };
+    marked.setOptions({ renderer: renderer });
+
     window.onload = function() {
       renderSidebar();
-      initTextareaAutoResize(); 
+      initTextareaAutoResize();
       if (Object.keys(allChats).length > 0) {
         const sortedIds = Object.keys(allChats).sort((a,b) => allChats[b].updatedAt - allChats[a].updatedAt);
         loadChat(sortedIds[0]);
@@ -90,6 +115,17 @@
         startNewChat();
       }
     };
+
+    function copyOnlyCode(button, textToCopy) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        button.classList.add('copied');
+        button.innerHTML = `<i class="fas fa-check"></i> Copié !`;
+        setTimeout(() => {
+          button.classList.remove('copied');
+          button.innerHTML = `<i class="fas fa-copy"></i> Copier le code`;
+        }, 2000);
+      }).catch(err => { console.error(err); });
+    }
 
     function initTextareaAutoResize() {
       const textarea = document.getElementById('user-input');
@@ -272,158 +308,42 @@
 
     function copyText(button, textToCopy) {
       navigator.clipboard.writeText(textToCopy).then(() => {
-        const icon = button.querySelector('i');
-        const originalClass = icon.className;
-        icon.className = "fas fa-check";
-        button.classList.add('active');
+        button.classList.add('copied');
+        button.innerHTML = `<i class="fas fa-check"></i>`;
         setTimeout(() => {
-          icon.className = originalClass;
-          button.classList.remove('active');
+          button.classList.remove('copied');
+          button.innerHTML = `<i class="fas fa-copy"></i>`;
         }, 2000);
       }).catch(err => { console.error(err); });
     }
 
-    function handleLike(button) {
-      const parent = button.parentElement;
-      const dislikeBtn = parent.querySelector('.fa-thumbs-down').parentElement;
-      
-      dislikeBtn.classList.remove('active');
-      dislikeBtn.querySelector('i').className = "far fa-thumbs-down";
-      
-      const icon = button.querySelector('i');
-      if (icon.classList.contains('far')) {
-        icon.className = "fas fa-thumbs-up";
-        button.classList.add('active');
-      } else {
-        icon.className = "far fa-thumbs-up";
-        button.classList.remove('active');
-      }
-    }
-
-    function handleDislike(button) {
-      const parent = button.parentElement;
-      const likeBtn = parent.querySelector('.fa-thumbs-up').parentElement;
-      
-      likeBtn.classList.remove('active');
-      likeBtn.querySelector('i').className = "far fa-thumbs-up";
-      
-      const icon = button.querySelector('i');
-      if (icon.classList.contains('far')) {
-        icon.className = "fas fa-thumbs-down";
-        button.classList.add('active');
-      } else {
-        icon.className = "far fa-thumbs-down";
-        button.classList.remove('active');
-      }
-    }
-
-    function handleShare(textToShare) {
-      if (navigator.share) {
-        navigator.share({
-          title: 'Réponse de Axiom IA',
-          text: textToShare
-        }).catch(console.error);
-      } else {
-        navigator.clipboard.writeText(textToShare);
-        alert("Lien de partage indisponible. Le texte a été copié dans votre presse-papiers !");
-      }
-    }
-
-    function handleRegenerate() {
-      if (isGenerating) return;
-      
-      const history = allChats[currentChatId].history;
-      if (history.length > 0 && history[history.length - 1].role === 'assistant') {
-        history.pop();
-      }
-      
-      loadChat(currentChatId);
-      
-      if (history.length > 0) {
-        const lastUserMsg = history.pop(); 
-        let textToSend = "";
-        
-        if (Array.isArray(lastUserMsg.content)) {
-          textToSend = lastUserMsg.content[0].text;
-        } else if (typeof lastUserMsg.content === 'string' && lastUserMsg.content.includes("Question : ")) {
-          textToSend = lastUserMsg.content.split("Question : ")[1];
-        } else {
-          textToSend = lastUserMsg.content;
-        }
-        
-        document.getElementById('user-input').value = textToSend;
-        sendMessage();
-      }
-    }
-
     function displayMessage(role, text, isHistoryLoad = false) {
       const chatContainer = document.getElementById('chat-container');
-      
-      const messageWrapper = document.createElement('div');
-      messageWrapper.className = `message-wrapper ${role}-wrapper`;
-
       const msgDiv = document.createElement('div');
-      msgDiv.className = `message ${role}-message`;
+      
+      if (role === 'user') {
+        msgDiv.className = 'message user-message';
+      } else {
+        msgDiv.className = 'message bot-message';
+      }
       
       let htmlContent = role === 'user' ? `<i class="fas fa-user me-1"></i> ` : `<i class="fas fa-robot me-1"></i> `;
       
       msgDiv.innerHTML = `
+        <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">${htmlContent}<span class="render-zone"></span></div>
       `;
       
       if (role === 'user') {
         msgDiv.querySelector('.render-zone').textContent = text;
-        messageWrapper.appendChild(msgDiv);
       } else {
         msgDiv.querySelector('.render-zone').innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
-        messageWrapper.appendChild(msgDiv);
-        
-        // RECRÉATION SÉCURISÉE DES BOUTONS SANS BRISER LE HTML NI LE FOND BLANC
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'bot-actions-toolbar';
-        
-        const likeBtn = document.createElement('button');
-        likeBtn.className = 'action-tool-btn';
-        likeBtn.title = 'Liker';
-        likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
-        likeBtn.onclick = function() { handleLike(this); };
-
-        const dislikeBtn = document.createElement('button');
-        dislikeBtn.className = 'action-tool-btn';
-        dislikeBtn.title = 'Disliker';
-        dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
-        dislikeBtn.onclick = function() { handleDislike(this); };
-
-        const regenBtn = document.createElement('button');
-        regenBtn.className = 'action-tool-btn';
-        regenBtn.title = 'Régénérer la réponse';
-        regenBtn.innerHTML = '<i class="fas fa-redo-alt"></i>';
-        regenBtn.onclick = function() { handleRegenerate(); };
-
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'action-tool-btn';
-        copyBtn.title = 'Copier tout le message';
-        copyBtn.innerHTML = '<i class="far fa-copy"></i>';
-        copyBtn.onclick = function() { copyText(this, text); };
-
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'action-tool-btn';
-        shareBtn.title = 'Partager';
-        shareBtn.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
-        shareBtn.onclick = function() { handleShare(text); };
-
-        actionsDiv.appendChild(likeBtn);
-        actionsDiv.appendChild(dislikeBtn);
-        actionsDiv.appendChild(regenBtn);
-        actionsDiv.appendChild(copyBtn);
-        actionsDiv.appendChild(shareBtn);
-        
-        messageWrapper.appendChild(actionsDiv);
       }
       
-      chatContainer.appendChild(messageWrapper);
+      msgDiv.querySelector('.copy-btn').onclick = function() { copyText(this, text); };
+      chatContainer.appendChild(msgDiv);
       if(!isHistoryLoad) chatContainer.scrollTop = chatContainer.scrollHeight;
-      return messageWrapper;
+      return msgDiv;
     }
 
     function handleActionClick() {
@@ -492,18 +412,15 @@
       input.value = '';
       resetTextareaHeight();
 
-      const temporaryWrapper = document.createElement('div');
-      temporaryWrapper.className = 'message-wrapper bot-wrapper';
-
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot-message';
       botMessage.innerHTML = `
+        <button class="copy-btn" title="Copier tout le message"><i class="fas fa-copy"></i></button>
         <div class="message-text-content">
           <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom se connecte...</span>
         </div>
       `;
-      temporaryWrapper.appendChild(botMessage);
-      chatContainer.appendChild(temporaryWrapper);
+      chatContainer.appendChild(botMessage);
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       const renderZone = botMessage.querySelector('.render-zone');
@@ -515,7 +432,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             history: allChats[currentChatId].history,
-            options: { length: lengthOption, level: levelOption } 
+            options: { length: lengthOption, level: levelOption }
           }),
           signal: signal 
         });
@@ -571,14 +488,13 @@
           botMessage.className = 'message error-message';
         }
       } finally {
-        temporaryWrapper.remove();
         if (fullResponseText.trim() !== "") {
+          botMessage.querySelector('.copy-btn').onclick = function() {
+            copyText(this, fullResponseText);
+          };
           allChats[currentChatId].history.push({ role: "assistant", content: fullResponseText });
           allChats[currentChatId].updatedAt = Date.now();
           saveToStorage();
-          displayMessage('assistant', fullResponseText);
-        } else {
-          displayMessage('assistant', "Une erreur est survenue, veuillez réessayer.");
         }
         finalizeGenerationState();
       }
