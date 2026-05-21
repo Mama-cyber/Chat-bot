@@ -580,7 +580,8 @@ header h1 {
   background-color: #fff;
   display: inline-block;
   vertical-align: middle;
-  margin-right: 20px; /* Écart augmenté pour plus de séparation */
+  margin-right: 10px;
+  margin-left: 10px;
 }
 
 /* La vague est fixée au milieu */
