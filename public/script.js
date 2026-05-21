@@ -94,6 +94,31 @@ function renderSidebar() {
 
 function startNewChat() {
   if (isGenerating) return;
+
+  // 1. On cherche s'il existe déjà une discussion vide qui s'appelle "Nouvelle discussion"
+  const existingNewChatId = Object.keys(allChats).find(
+    (id) => allChats[id].title === "Nouvelle discussion",
+  );
+
+  if (existingNewChatId) {
+    // Si elle existe déjà et qu'on est déjà dessus, on ne fait rien
+    if (currentChatId === existingNewChatId) {
+      // On ferme juste la sidebar sur mobile au cas où
+      if (window.innerWidth <= 768) {
+        document.getElementById("sidebar").classList.remove("open");
+      }
+      return;
+    }
+
+    // Si elle existe mais qu'on n'est pas dessus, on y emmène l'utilisateur
+    loadChat(existingNewChatId);
+    if (window.innerWidth <= 768) {
+      document.getElementById("sidebar").classList.remove("open");
+    }
+    return;
+  }
+
+  // 2. Si aucune "Nouvelle discussion" n'existe, on la crée normalement
   currentChatId = "chat_" + Date.now();
   allChats[currentChatId] = {
     title: "Nouvelle discussion",
@@ -108,6 +133,11 @@ function startNewChat() {
   };
   saveToStorage();
   loadChat(currentChatId);
+
+  // Ferme la barre latérale sur mobile après la création
+  if (window.innerWidth <= 768) {
+    document.getElementById("sidebar").classList.remove("open");
+  }
 }
 
 function loadChat(id) {
