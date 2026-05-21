@@ -384,20 +384,28 @@ header h1 {
   font-weight: 600;
 }
 
+/* ✨ CONFIGURATION DE RETOUR À LA LIGNE INTELLIGENTE DU CODE ✨ */
 .code-container pre {
   margin: 0 !important;
   padding: 1.2rem 1rem !important;
   background: transparent !important;
-  overflow-x: auto !important;
-  white-space: pre !important;
   max-width: 100%;
+
+  /* Active le retour à la ligne automatique tout en préservant les espaces/indentations */
+  white-space: pre-wrap !important;
+  /* Empêche de couper un mot au milieu d'une lettre si possible */
+  word-break: keep-all !important;
+  /* Permet la coupure uniquement si un seul mot ultra long dépasse entièrement */
+  overflow-wrap: anywhere !important;
+  /* Définit une taille de tabulation propre pour garder les alignements */
+  tab-size: 4;
 }
 
 .code-container code {
   font-family: "Consolas", monospace !important;
   font-size: 0.9rem !important;
   color: #d4d4d4;
-  white-space: pre !important;
+  white-space: pre-wrap !important;
 }
 
 /* ===== BARRE DE SAISIE ===== */
