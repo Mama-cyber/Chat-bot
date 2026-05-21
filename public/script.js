@@ -592,9 +592,11 @@ async function executePromptRegeneration(
 
   const botMessage = document.createElement("div");
   botMessage.className = "message bot-message";
+
+  // MODIFICATION ICI : Remplacement de l'icône FontAwesome par la div .wave-spinner
   botMessage.innerHTML = `
     <div class="message-text-content">
-      <i class="fas fa-robot me-1"></i><span class="render-zone"><i class="fas fa-spinner fa-spin"></i> Axiom calcule la suite...</span>
+      <i class="fas fa-robot me-1"></i><span class="render-zone"><div class="wave-spinner"></div> Axiom calcule la suite...</span>
     </div>
   `;
   chatContainer.appendChild(botMessage);

@@ -571,13 +571,17 @@ header h1 {
 
 /* ===== INDICATEUR DE CHARGEMENT VAGUE ===== */
 .wave-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--primary);
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--primary);
   border-radius: 50%;
   position: relative;
   overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
 }
+
 .wave-spinner::after {
   content: "";
   position: absolute;
@@ -589,9 +593,14 @@ header h1 {
   border-radius: 40%;
   animation: wave-animation 3s infinite linear;
 }
+
 @keyframes wave-animation {
-  0% { transform: rotate(0deg) translateY(0); }
-  100% { transform: rotate(360deg) translateY(-10px); }
+  0% {
+    transform: rotate(0deg) translateY(0);
+  }
+  100% {
+    transform: rotate(360deg) translateY(-10px);
+  }
 }
 
 /* RESPONSIVE */
