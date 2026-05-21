@@ -164,6 +164,30 @@ header {
   z-index: 10;
 }
 
+header a,
+.render-zone a,
+.message a {
+  text-decoration: none !important;
+  outline: none;
+  border-bottom: none !important;
+  display: inline-block;
+  color: inherit;
+  transition:
+    transform 0.2s ease,
+    font-weight 0.2s ease,
+    color 0.2s ease;
+}
+
+header a:hover,
+.render-zone a:hover,
+.message a:hover {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  font-weight: 700;
+  transform: scale(1.05);
+  color: var(--success);
+}
+
 header h1 {
   font-family: "Playfair Display", serif;
   font-size: 1.8rem;
@@ -211,30 +235,6 @@ header h1 {
   background-color: #ffffff !important;
 }
 
-/* BOUTON DE COPIE DES PROMPTS (STYLE ASSORTI DISCRET EN CONTINU) */
-.copy-btn {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  background: none;
-  border: none;
-  color: inherit;
-  opacity: 0.55;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition:
-    opacity 0.2s ease,
-    color 0.2s ease;
-}
-
-.message:hover .copy-btn {
-  opacity: 1;
-}
-.copy-btn.copied {
-  color: #27c93f !important;
-  opacity: 1 !important;
-}
-
 .user-message {
   background: linear-gradient(135deg, var(--primary), #c75b39);
   color: white;
@@ -259,21 +259,29 @@ header h1 {
   margin-bottom: 6px;
 }
 
-/* BARRE D'ACTIONS DE L'IA (STYLE FLUIDE ET SANS BORDURES/FONDS CHASSÉS) */
-.bot-actions {
+/* BARRES D'ACTIONS DES MESSAGES */
+.bot-actions,
+.user-actions {
   display: flex;
   gap: 16px;
   margin-top: 12px;
   padding-top: 8px;
-  border-top: 1px solid rgba(224, 122, 95, 0.08);
   justify-content: flex-start;
   align-items: center;
+}
+
+.bot-actions {
+  border-top: 1px solid rgba(224, 122, 95, 0.08);
+}
+
+.user-actions {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .action-btn {
   background: none;
   border: none;
-  color: var(--text);
+  color: inherit;
   opacity: 0.5;
   cursor: pointer;
   font-size: 0.9rem;
@@ -284,19 +292,41 @@ header h1 {
   justify-content: center;
 }
 
-.action-btn:hover {
+.bot-actions .action-btn:hover,
+.bot-actions .action-btn.active {
   opacity: 1;
   color: var(--primary);
 }
 
-.action-btn.active {
+.user-actions .action-btn:hover {
   opacity: 1;
-  color: var(--primary);
+  color: #ffffff;
 }
 
 .action-btn.copied {
   color: #27c93f !important;
   opacity: 1 !important;
+}
+
+/* 🔄 NOUVEAU STYLE : TEXTAREA INTERNE DANS LA BULLE UTILISATEUR */
+.inline-edit-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.95rem;
+  padding: 8px 10px;
+  outline: none;
+  resize: none;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.inline-edit-textarea:focus {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: #ffffff;
 }
 
 /* ===== BLOCS DE CODE DESIGN SNAPCODE ===== */
