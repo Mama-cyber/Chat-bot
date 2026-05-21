@@ -86,6 +86,11 @@ body {
   white-space: nowrap;
 }
 
+#new-chat-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 15px rgba(200, 85, 61, 0.35); /* Ombre conservée ici */
+}
+
 #history-list {
   flex: 1;
   overflow-y: auto;
@@ -105,6 +110,9 @@ body {
   justify-content: space-between;
   gap: 10px;
   transition: all 0.2s ease;
+  /* changement */
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .history-item-text {
@@ -122,24 +130,37 @@ body {
   background-color: white;
   border-color: var(--primary);
   color: var(--dark);
+  /* changement */
+  transform: scale(1.01);
 }
 
 .delete-chat-btn {
-  background: none;
+  background: transparent !important;
   border: none;
   color: var(--text);
   opacity: 0.3;
   cursor: pointer;
   padding: 4px 6px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  /* Optimisation fluidité */
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .history-item:hover .delete-chat-btn {
   opacity: 0.7;
 }
+
 .delete-chat-btn:hover {
   color: var(--danger) !important;
   opacity: 1 !important;
-  background-color: rgba(214, 90, 111, 0.1);
+  background-color: transparent !important;
+  transform: scale(1.03) !important;
+  box-shadow: none !important; /* Ombre supprimée */
 }
 
 /* ===== ZONE DE DISCUSSION ===== */
@@ -203,12 +224,23 @@ header h1 {
   left: 20px;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  background: transparent !important;
   border: none;
   color: var(--success);
   font-size: 1.4rem;
   cursor: pointer;
   z-index: 30;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+  /* Optimisation fluidité */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+#menu-toggle:hover {
+  transform: translateY(-50%) scale(1.03) !important;
+  box-shadow: none !important; /* Ombre supprimée */
+  background-color: transparent !important;
 }
 
 #chat-container {
@@ -227,8 +259,6 @@ header h1 {
 .message {
   max-width: 85%;
   padding: 0.8rem 1.2rem;
-  border-radius: 20px;
-  border-bottom-left-radius: 5px;
   font-size: 0.95rem;
   word-wrap: break-word;
   word-break: break-word;
@@ -236,13 +266,21 @@ header h1 {
   box-shadow: 0 2px 8px rgba(94, 48, 35, 0.05);
   position: relative;
   background-color: #ffffff !important;
+  border-radius: 20px;
+  border-bottom-left-radius: 5px;
+}
+
+.action-btn i,
+.delete-chat-btn i,
+#menu-toggle i {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .user-message {
   background: linear-gradient(135deg, var(--primary), #c75b39);
   color: white;
   align-self: flex-end;
-  border-bottom-right-radius: 5px;
   border-bottom-left-radius: 20px !important;
 }
 
@@ -251,7 +289,6 @@ header h1 {
   color: var(--text);
   align-self: flex-start;
   border: 1px solid rgba(224, 122, 95, 0.15);
-  border-bottom-left-radius: 5px;
   width: 100%;
   border-bottom-left-radius: 5px !important;
 }
@@ -290,29 +327,40 @@ header h1 {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.action-btn {
-  background: none;
+.bot-actions .action-btn,
+.user-actions .action-btn {
+  background: transparent !important;
   border: none;
   color: inherit;
   opacity: 0.5;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.2s ease;
   padding: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+  /* Optimisation fluidité */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.user-actions .action-btn:hover {
+  opacity: 1 !important;
+  color: #ffffff !important;
+  background-color: transparent !important;
+  transform: scale(1.03) !important;
+  box-shadow: none !important; /* Ombre supprimée */
 }
 
 .bot-actions .action-btn:hover,
 .bot-actions .action-btn.active {
-  opacity: 1;
-  color: var(--primary);
-}
-
-.user-actions .action-btn:hover {
-  opacity: 1;
-  color: #ffffff;
+  opacity: 1 !important;
+  color: var(--primary) !important;
+  background-color: transparent !important;
+  transform: scale(1.03) !important;
+  box-shadow: none !important; /* Ombre supprimée */
 }
 
 .action-btn.copied {
@@ -320,7 +368,6 @@ header h1 {
   opacity: 1 !important;
 }
 
-/* TEXTAREA INTERNE DANS LA BULLE UTILISATEUR EN MODE ÉDITION */
 .inline-edit-textarea {
   width: 100%;
   background: rgba(255, 255, 255, 0.15);
@@ -389,20 +436,14 @@ header h1 {
   font-weight: 600;
 }
 
-/* ✨ CONFIGURATION DE RETOUR À LA LIGNE INTELLIGENTE DU CODE ✨ */
 .code-container pre {
   margin: 0 !important;
   padding: 1.2rem 1rem !important;
   background: transparent !important;
   max-width: 100%;
-
-  /* Active le retour à la ligne automatique tout en préservant les espaces/indentations */
   white-space: pre-wrap !important;
-  /* Empêche de couper un mot au milieu d'une lettre si possible */
   word-break: keep-all !important;
-  /* Permet la coupure uniquement si un seul mot ultra long dépasse entièrement */
   overflow-wrap: anywhere !important;
-  /* Définit une taille de tabulation propre pour garder les alignements */
   tab-size: 4;
 }
 
@@ -526,6 +567,31 @@ header h1 {
   max-height: 120px;
   line-height: 1.4;
   overflow-y: auto;
+}
+
+/* ===== INDICATEUR DE CHARGEMENT VAGUE ===== */
+.wave-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--primary);
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+}
+.wave-spinner::after {
+  content: "";
+  position: absolute;
+  left: -50%;
+  top: 50%;
+  width: 200%;
+  height: 200%;
+  background-color: var(--primary);
+  border-radius: 40%;
+  animation: wave-animation 3s infinite linear;
+}
+@keyframes wave-animation {
+  0% { transform: rotate(0deg) translateY(0); }
+  100% { transform: rotate(360deg) translateY(-10px); }
 }
 
 /* RESPONSIVE */
