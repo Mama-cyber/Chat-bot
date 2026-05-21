@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta
-      name="viewport"
+      name=\"viewport\"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Axiom</title>
@@ -232,10 +232,7 @@
           if (msg.role === "assistant") {
             addBotActions(msgElement, msg.content, index, msg.feedback);
           } else if (msg.role === "user") {
-            let rawText =
-              typeof msg.content === "string"
-                ? msg.content
-                : msg.content[0]?.text || "";
+            let rawText = typeof msg.content === 'string' ? msg.content : (msg.content[0]?.text || "");
             if (rawText.includes("Voici le contenu du fichier joint")) {
               rawText = rawText.split("\n\nQuestion : ")[1] || rawText;
             }
@@ -376,7 +373,6 @@
         return msgDiv;
       }
 
-      // 🔄 MODIFICATION : MODIFICATION DU PROMPT IN-PLACE (DANS LA BULLE)
       function addUserActions(msgDiv, text, historyIndex) {
         if (msgDiv.querySelector(".user-actions")) return;
 
@@ -397,30 +393,25 @@
           copyText(this, text);
         };
 
-        // Action de modification directe dans la bulle
         editBtn.onclick = function () {
           if (isGenerating) return;
 
           const renderZone = msgDiv.querySelector(".render-zone");
-
-          // Crée le textarea interne
+          
           const inlineTextarea = document.createElement("textarea");
           inlineTextarea.className = "inline-edit-textarea";
           inlineTextarea.value = text;
-
-          // Sauvegarde l'affichage initial pour pouvoir l'écraser
+          
           renderZone.innerHTML = "";
           renderZone.appendChild(inlineTextarea);
           inlineTextarea.focus();
-
-          // Ajuste la hauteur initiale du textarea de la bulle
+          
           inlineTextarea.style.height = inlineTextarea.scrollHeight + "px";
-          inlineTextarea.addEventListener("input", function () {
+          inlineTextarea.addEventListener("input", function() {
             this.style.height = "auto";
             this.style.height = this.scrollHeight + "px";
           });
 
-          // Remplace les boutons d'action par un bouton de validation unique
           actionsDiv.innerHTML = `
             <button class="action-btn save-inline-btn" style="opacity:1; color:#fff; font-weight:600;" title="Valider et régénérer">
               <i class="fas fa-check me-1"></i> Envoyer
@@ -433,13 +424,11 @@
           const triggerSave = () => {
             const newPromptText = inlineTextarea.value.trim();
             if (!newPromptText) return;
-
-            // Relance l'envoi avec l'index cible pour écraser et régénérer
+            
             executePromptRegeneration(newPromptText, historyIndex);
           };
 
-          // Gestion de la touche Entrée dans la bulle
-          inlineTextarea.addEventListener("keydown", function (e) {
+          inlineTextarea.addEventListener("keydown", function(e) {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               triggerSave();
@@ -448,19 +437,16 @@
 
           actionsDiv.querySelector(".save-inline-btn").onclick = triggerSave;
           actionsDiv.querySelector(".cancel-inline-btn").onclick = () => {
-            // Recharge simplement le chat pour annuler proprement l'état d'édition
             loadChat(currentChatId);
           };
         };
 
         shareBtn.onclick = function () {
           if (navigator.share) {
-            navigator
-              .share({
-                title: "Prompt Axiom",
-                text: text,
-              })
-              .catch((err) => console.log(err));
+            navigator.share({
+              title: "Prompt Axiom",
+              text: text,
+            }).catch((err) => console.log(err));
           } else {
             navigator.clipboard.writeText(text).then(() => {
               shareBtn.innerHTML = `<i class="fas fa-check"></i>`;
@@ -483,7 +469,7 @@
 
         actionsDiv.innerHTML = `
         <button class="action-btn copy-bot-btn" title="Copier la réponse"><i class="fas fa-copy"></i></button>
-        <button class="action-btn like-btn" title="Bonne raisonnement"><i class="far fa-thumbs-up"></i></button>
+        <button class="action-btn like-btn" title="Bon raisonnement"><i class="far fa-thumbs-up"></i></button>
         <button class="action-btn dislike-btn" title="Mauvais raisonnement"><i class="far fa-thumbs-down"></i></button>
         <button class="action-btn share-btn" title="Partager"><i class="fas fa-share-alt"></i></button>
       `;
@@ -582,20 +568,15 @@
         }
       }
 
-      // FONCTION DE SÉCURITÉ POUR ENVOYER UN MESSAGE STANDARD
       async function sendMessage() {
         const input = document.getElementById("user-input");
         const messageText = input.value.trim();
         if (!messageText && !selectedFile) return;
-
+        
         executePromptRegeneration(messageText, null);
       }
 
-      // 🔄 NOUVELLE FONCTION UNIFIÉE : PREND EN CHARGE LA CRÉATION OU LA REGENERATION APRÈS MODIFICATION
-      async function executePromptRegeneration(
-        messageText,
-        targetHistoryIndex = null,
-      ) {
+      async function executePromptRegeneration(messageText, targetHistoryIndex = null) {
         const chatContainer = document.getElementById("chat-container");
         const sendButton = document.getElementById("send-button");
         const buttonIcon = document.getElementById("button-icon");
@@ -607,60 +588,37 @@
         buttonIcon.className = "fas fa-stop";
 
         let contentStructure;
-
+        
         if (targetHistoryIndex !== null) {
-          // --- CONFIGURATION POUR UNE MODIFICATION D'UN MESSAGE EXISTANT ---
           let currentHistory = allChats[currentChatId].history;
           let originalItem = currentHistory[targetHistoryIndex];
 
-          if (
-            typeof originalItem.content === "object" &&
-            Array.isArray(originalItem.content)
-          ) {
-            // Conserve l'image si elle existait dans la structure complexe originale
+          if (typeof originalItem.content === "object" && Array.isArray(originalItem.content)) {
             contentStructure = [...originalItem.content];
             contentStructure[0].text = messageText;
-          } else if (
-            typeof originalItem.content === "string" &&
-            originalItem.content.includes("Voici le contenu du fichier joint")
-          ) {
-            // Conserve le fichier texte joint s'il y en avait un
+          } else if (typeof originalItem.content === "string" && originalItem.content.includes("Voici le contenu du fichier joint")) {
             const parts = originalItem.content.split("\n\nQuestion : ");
             contentStructure = `${parts[0]}\n\nQuestion : ${messageText}`;
           } else {
             contentStructure = messageText;
           }
 
-          // Remplace l'élément modifié et SUPPRIME l'ensemble des messages suivants (la vieille réponse de l'IA)
-          currentHistory[targetHistoryIndex] = {
-            role: "user",
-            content: contentStructure,
-          };
-          allChats[currentChatId].history = currentHistory.slice(
-            0,
-            targetHistoryIndex + 1,
-          );
-
-          // Re-charge le conteneur visuel propre pour supprimer les anciens éléments visuels obsolètes
+          currentHistory[targetHistoryIndex] = { role: "user", content: contentStructure };
+          allChats[currentChatId].history = currentHistory.slice(0, targetHistoryIndex + 1);
+          
           loadChat(currentChatId);
         } else {
-          // --- CONFIGURATION POUR UN NOUVEAU MESSAGE STANDARD ---
           if (allChats[currentChatId].title === "Nouvelle discussion") {
-            allChats[currentChatId].title = messageText
-              ? messageText.substring(0, 24) + "..."
-              : "Analyse de fichier";
+            allChats[currentChatId].title = messageText ? messageText.substring(0, 24) + "..." : "Analyse de fichier";
           }
 
           let viewText = messageText;
           if (selectedFile) {
-            viewText =
-              (selectedFile.type.startsWith("image/")
-                ? `[Image: ${selectedFile.name}] `
-                : `[Document: ${selectedFile.name}] `) + viewText;
+            viewText = (selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `) + viewText;
           }
-
+          
           const userMsgDiv = displayMessage("user", viewText);
-
+          
           if (selectedFile) {
             if (selectedFile.type.startsWith("image/")) {
               contentStructure = [
@@ -674,28 +632,18 @@
             contentStructure = messageText;
           }
 
-          allChats[currentChatId].history.push({
-            role: "user",
-            content: contentStructure,
-          });
-          addUserActions(
-            userMsgDiv,
-            messageText || viewText,
-            allChats[currentChatId].history.length - 1,
-          );
-
-          // Nettoie l'interface globale basse de saisie
+          allChats[currentChatId].history.push({ role: "user", content: contentStructure });
+          addUserActions(userMsgDiv, messageText || viewText, allChats[currentChatId].history.length - 1);
+          
           clearFile();
           document.getElementById("user-input").value = "";
           resetTextareaHeight();
         }
 
-        // Sauvegarde de l'état avant l'appel API
         allChats[currentChatId].updatedAt = Date.now();
         saveToStorage();
         renderSidebar();
 
-        // Crée la bulle d'attente pour le bot
         const botMessage = document.createElement("div");
         botMessage.className = "message bot-message";
         botMessage.innerHTML = `

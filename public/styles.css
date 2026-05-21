@@ -308,7 +308,7 @@ header h1 {
   opacity: 1 !important;
 }
 
-/* 🔄 NOUVEAU STYLE : TEXTAREA INTERNE DANS LA BULLE UTILISATEUR */
+/* TEXTAREA INTERNE DANS LA BULLE UTILISATEUR EN MODE ÉDITION */
 .inline-edit-textarea {
   width: 100%;
   background: rgba(255, 255, 255, 0.15);
@@ -376,21 +376,25 @@ header h1 {
   font-weight: 600;
 }
 
+/* 🔄 CORRECTIF RETOUR À LA LIGNE AUTOMATIQUE DANS LES BLOCS DE CODE <pre> */
 .code-container pre {
   margin: 0 !important;
   padding: 1.2rem 1rem !important;
   background: transparent !important;
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  word-break: break-word;
+  white-space: pre-wrap !important; /* CSS3 - Force le retour à la ligne automatique */
+  white-space: -moz-pre-wrap !important; /* Support anciens navigateurs Firefox */
+  white-space: -pre-wrap !important; /* Support anciens navigateurs Opera */
+  white-space: -o-pre-wrap !important; /* Support anciens navigateurs Opera alternative */
+  word-wrap: break-word !important; /* Coupe les mots ultra longs si besoin */
+  word-break: break-word !important; /* Empêche les balises de briser le gabarit de la bulle */
 }
 
 .code-container code {
   font-family: "Consolas", monospace !important;
   font-size: 0.9rem !important;
   color: #d4d4d4;
-  white-space: pre-wrap;
+  white-space: pre-wrap !important; /* Aligné avec le conteneur parent pre */
+  word-break: break-word !important;
 }
 
 /* ===== BARRE DE SAISIE ===== */
