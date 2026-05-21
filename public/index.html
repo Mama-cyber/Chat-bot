@@ -88,12 +88,8 @@
 
     <script>
       let selectedFile = null;
-
-      // STRUCTURE MULTI-CHATS
       let allChats = JSON.parse(localStorage.getItem("axiom_chats")) || {};
       let currentChatId = null;
-
-      // VARIABLES DE CONTRÔLE
       let isGenerating = false;
       let currentAbortController = null;
 
@@ -400,7 +396,6 @@
           if (isGenerating) return;
 
           const renderZone = msgDiv.querySelector(".render-zone");
-
           const inlineTextarea = document.createElement("textarea");
           inlineTextarea.className = "inline-edit-textarea";
           inlineTextarea.value = text;
@@ -427,7 +422,6 @@
           const triggerSave = () => {
             const newPromptText = inlineTextarea.value.trim();
             if (!newPromptText) return;
-
             executePromptRegeneration(newPromptText, historyIndex);
           };
 
@@ -527,9 +521,7 @@
           } else {
             navigator.clipboard.writeText(text).then(() => {
               shareBtn.innerHTML = `<i class="fas fa-check"></i>`;
-              alert(
-                "Partage natif non supporté sur ce navigateur. La réponse a été copiée !",
-              );
+              alert("La réponse a été copiée dans votre presse-papiers !");
               setTimeout(() => {
                 shareBtn.innerHTML = `<i class="fas fa-share-alt"></i>`;
               }, 2000);
@@ -542,19 +534,19 @@
 
       function updateFeedbackUI(likeBtn, dislikeBtn, feedback) {
         if (feedback === "like") {
-          likeBtn.classList.add("active");
+          likeBtn.className = "action-btn like-btn active";
           likeBtn.innerHTML = '<i class="fas fa-thumbs-up"></i>';
-          dislikeBtn.classList.remove("active");
+          dislikeBtn.className = "action-btn dislike-btn";
           dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
         } else if (feedback === "dislike") {
-          dislikeBtn.classList.add("active");
+          dislikeBtn.className = "action-btn dislike-btn active";
           dislikeBtn.innerHTML = '<i class="fas fa-thumbs-down"></i>';
-          likeBtn.classList.remove("active");
+          likeBtn.className = "action-btn like-btn";
           likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
         } else {
-          likeBtn.classList.remove("active");
+          likeBtn.className = "action-btn like-btn";
           likeBtn.innerHTML = '<i class="far fa-thumbs-up"></i>';
-          dislikeBtn.classList.remove("active");
+          dislikeBtn.className = "action-btn dislike-btn";
           dislikeBtn.innerHTML = '<i class="far fa-thumbs-down"></i>';
         }
       }
@@ -577,7 +569,6 @@
         const input = document.getElementById("user-input");
         const messageText = input.value.trim();
         if (!messageText && !selectedFile) return;
-
         executePromptRegeneration(messageText, null);
       }
 
@@ -586,7 +577,6 @@
         targetHistoryIndex = null,
       ) {
         const chatContainer = document.getElementById("chat-container");
-        const sendButton = document.getElementById("send-button");
         const buttonIcon = document.getElementById("button-icon");
 
         const lengthOption = document.getElementById("option-length").value;
@@ -625,7 +615,6 @@
             0,
             targetHistoryIndex + 1,
           );
-
           loadChat(currentChatId);
         } else {
           if (allChats[currentChatId].title === "Nouvelle discussion") {
@@ -762,10 +751,10 @@
             const msgIndex = allChats[currentChatId].history.length - 1;
             allChats[currentChatId].updatedAt = Date.now();
             saveToStorage();
-
             addBotActions(botMessage, fullResponseText, msgIndex);
           }
           finalizeGenerationState();
+          chatContainer.scrollTop = chatContainer.scrollHeight;
         }
       }
 
@@ -773,8 +762,6 @@
         isGenerating = false;
         currentAbortController = null;
         document.getElementById("button-icon").className = "fas fa-paper-plane";
-        document.getElementById("send-button").style.background =
-          "linear-gradient(135deg, var(--secondary), var(--accent))";
       }
     </script>
   </body>

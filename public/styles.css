@@ -242,7 +242,6 @@ header h1 {
   border-bottom-right-radius: 5px;
 }
 
-/* 🔄 CORRECTIF ICI : Bloque l'élargissement de la bulle du robot */
 .bot-message {
   background-color: white;
   color: var(--text);
@@ -250,8 +249,13 @@ header h1 {
   border: 1px solid rgba(224, 122, 95, 0.15);
   border-bottom-left-radius: 5px;
   width: 100%;
+}
+
+.bot-message-content {
+  width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .bot-message-content ul,
@@ -380,13 +384,12 @@ header h1 {
   font-weight: 600;
 }
 
-/* 🔄 CORRECTIF ICI : Force le scroll horizontal sans briser ou élargir la bulle */
 .code-container pre {
   margin: 0 !important;
   padding: 1.2rem 1rem !important;
   background: transparent !important;
-  overflow-x: auto !important; /* Active la scrollbar horizontale */
-  white-space: pre !important; /* Garde l'alignement propre du code informatique */
+  overflow-x: auto !important;
+  white-space: pre !important;
   max-width: 100%;
 }
 
@@ -469,25 +472,8 @@ header h1 {
   align-items: flex-end;
 }
 
-#user-input {
-  flex: 1;
-  padding: 0.7rem 1.1rem;
-  border: 1px solid var(--primary);
-  border-radius: 20px;
-  outline: none;
-  min-width: 0;
-  background-color: rgba(253, 245, 230, 0.6);
-  font-size: 0.95rem;
-  font-family: "Poppins", sans-serif;
-  resize: none;
-  height: 42px;
-  max-height: 120px;
-  line-height: 1.4;
-  overflow-y: auto;
-}
-
 .file-upload-btn,
-\n#send-button {
+#send-button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -508,6 +494,23 @@ header h1 {
   background: linear-gradient(135deg, var(--secondary), var(--accent));
   color: var(--dark);
   border: none;
+}
+
+#user-input {
+  flex: 1;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid var(--primary);
+  border-radius: 20px;
+  outline: none;
+  min-width: 0;
+  background-color: rgba(253, 245, 230, 0.6);
+  font-size: 0.95rem;
+  font-family: "Poppins", sans-serif;
+  resize: none;
+  height: 42px;
+  max-height: 120px;
+  line-height: 1.4;
+  overflow-y: auto;
 }
 
 /* RESPONSIVE */
