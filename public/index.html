@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta
-      name=\"viewport\"
+      name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Axiom</title>
@@ -232,7 +232,10 @@
           if (msg.role === "assistant") {
             addBotActions(msgElement, msg.content, index, msg.feedback);
           } else if (msg.role === "user") {
-            let rawText = typeof msg.content === 'string' ? msg.content : (msg.content[0]?.text || "");
+            let rawText =
+              typeof msg.content === "string"
+                ? msg.content
+                : msg.content[0]?.text || "";
             if (rawText.includes("Voici le contenu du fichier joint")) {
               rawText = rawText.split("\n\nQuestion : ")[1] || rawText;
             }
@@ -397,17 +400,17 @@
           if (isGenerating) return;
 
           const renderZone = msgDiv.querySelector(".render-zone");
-          
+
           const inlineTextarea = document.createElement("textarea");
           inlineTextarea.className = "inline-edit-textarea";
           inlineTextarea.value = text;
-          
+
           renderZone.innerHTML = "";
           renderZone.appendChild(inlineTextarea);
           inlineTextarea.focus();
-          
+
           inlineTextarea.style.height = inlineTextarea.scrollHeight + "px";
-          inlineTextarea.addEventListener("input", function() {
+          inlineTextarea.addEventListener("input", function () {
             this.style.height = "auto";
             this.style.height = this.scrollHeight + "px";
           });
@@ -424,11 +427,11 @@
           const triggerSave = () => {
             const newPromptText = inlineTextarea.value.trim();
             if (!newPromptText) return;
-            
+
             executePromptRegeneration(newPromptText, historyIndex);
           };
 
-          inlineTextarea.addEventListener("keydown", function(e) {
+          inlineTextarea.addEventListener("keydown", function (e) {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               triggerSave();
@@ -443,10 +446,12 @@
 
         shareBtn.onclick = function () {
           if (navigator.share) {
-            navigator.share({
-              title: "Prompt Axiom",
-              text: text,
-            }).catch((err) => console.log(err));
+            navigator
+              .share({
+                title: "Prompt Axiom",
+                text: text,
+              })
+              .catch((err) => console.log(err));
           } else {
             navigator.clipboard.writeText(text).then(() => {
               shareBtn.innerHTML = `<i class="fas fa-check"></i>`;
@@ -572,11 +577,14 @@
         const input = document.getElementById("user-input");
         const messageText = input.value.trim();
         if (!messageText && !selectedFile) return;
-        
+
         executePromptRegeneration(messageText, null);
       }
 
-      async function executePromptRegeneration(messageText, targetHistoryIndex = null) {
+      async function executePromptRegeneration(
+        messageText,
+        targetHistoryIndex = null,
+      ) {
         const chatContainer = document.getElementById("chat-container");
         const sendButton = document.getElementById("send-button");
         const buttonIcon = document.getElementById("button-icon");
@@ -588,37 +596,54 @@
         buttonIcon.className = "fas fa-stop";
 
         let contentStructure;
-        
+
         if (targetHistoryIndex !== null) {
           let currentHistory = allChats[currentChatId].history;
           let originalItem = currentHistory[targetHistoryIndex];
 
-          if (typeof originalItem.content === "object" && Array.isArray(originalItem.content)) {
+          if (
+            typeof originalItem.content === "object" &&
+            Array.isArray(originalItem.content)
+          ) {
             contentStructure = [...originalItem.content];
             contentStructure[0].text = messageText;
-          } else if (typeof originalItem.content === "string" && originalItem.content.includes("Voici le contenu du fichier joint")) {
+          } else if (
+            typeof originalItem.content === "string" &&
+            originalItem.content.includes("Voici le contenu du fichier joint")
+          ) {
             const parts = originalItem.content.split("\n\nQuestion : ");
             contentStructure = `${parts[0]}\n\nQuestion : ${messageText}`;
           } else {
             contentStructure = messageText;
           }
 
-          currentHistory[targetHistoryIndex] = { role: "user", content: contentStructure };
-          allChats[currentChatId].history = currentHistory.slice(0, targetHistoryIndex + 1);
-          
+          currentHistory[targetHistoryIndex] = {
+            role: "user",
+            content: contentStructure,
+          };
+          allChats[currentChatId].history = currentHistory.slice(
+            0,
+            targetHistoryIndex + 1,
+          );
+
           loadChat(currentChatId);
         } else {
           if (allChats[currentChatId].title === "Nouvelle discussion") {
-            allChats[currentChatId].title = messageText ? messageText.substring(0, 24) + "..." : "Analyse de fichier";
+            allChats[currentChatId].title = messageText
+              ? messageText.substring(0, 24) + "..."
+              : "Analyse de fichier";
           }
 
           let viewText = messageText;
           if (selectedFile) {
-            viewText = (selectedFile.type.startsWith("image/") ? `[Image: ${selectedFile.name}] ` : `[Document: ${selectedFile.name}] `) + viewText;
+            viewText =
+              (selectedFile.type.startsWith("image/")
+                ? `[Image: ${selectedFile.name}] `
+                : `[Document: ${selectedFile.name}] `) + viewText;
           }
-          
+
           const userMsgDiv = displayMessage("user", viewText);
-          
+
           if (selectedFile) {
             if (selectedFile.type.startsWith("image/")) {
               contentStructure = [
@@ -632,9 +657,16 @@
             contentStructure = messageText;
           }
 
-          allChats[currentChatId].history.push({ role: "user", content: contentStructure });
-          addUserActions(userMsgDiv, messageText || viewText, allChats[currentChatId].history.length - 1);
-          
+          allChats[currentChatId].history.push({
+            role: "user",
+            content: contentStructure,
+          });
+          addUserActions(
+            userMsgDiv,
+            messageText || viewText,
+            allChats[currentChatId].history.length - 1,
+          );
+
           clearFile();
           document.getElementById("user-input").value = "";
           resetTextareaHeight();
