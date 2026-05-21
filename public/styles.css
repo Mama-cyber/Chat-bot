@@ -228,6 +228,7 @@ header h1 {
   max-width: 85%;
   padding: 0.8rem 1.2rem;
   border-radius: 20px;
+  border-bottom-left-radius: 5px;
   font-size: 0.95rem;
   word-wrap: break-word;
   word-break: break-word;
@@ -242,6 +243,7 @@ header h1 {
   color: white;
   align-self: flex-end;
   border-bottom-right-radius: 5px;
+  border-bottom-left-radius: 20px !important;
 }
 
 .bot-message {
@@ -251,6 +253,7 @@ header h1 {
   border: 1px solid rgba(224, 122, 95, 0.15);
   border-bottom-left-radius: 5px;
   width: 100%;
+  border-bottom-left-radius: 5px !important;
 }
 
 .bot-message-content {
