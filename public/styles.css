@@ -162,6 +162,8 @@ header {
   justify-content: center;
   position: relative;
   z-index: 10;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 header a,
@@ -414,6 +416,8 @@ header h1 {
   border-top: 1px solid rgba(224, 122, 95, 0.15);
   padding: 0.8rem 1rem;
   width: 100%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
 #generation-options {
