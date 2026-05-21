@@ -571,40 +571,35 @@ header h1 {
 
 /* ===== INDICATEUR DE CHARGEMENT : VAGUE CONSTANTE ===== */
 .wave-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--primary);
+  width: 24px;   /* Réduit de 40% */
+  height: 24px;  /* Réduit de 40% */
+  border: 2px solid var(--primary); /* Ajusté proportionnellement */
   border-radius: 50%;
   position: relative;
   overflow: hidden;
   background-color: #fff;
   display: inline-block;
   vertical-align: middle;
-  margin-right: 10px;
+  margin-right: 20px; /* Écart augmenté pour plus de séparation */
 }
 
-/* La "vague" est fixée au milieu (top: 50%) */
+/* La vague est fixée au milieu */
 .wave-spinner::after {
   content: "";
   position: absolute;
   width: 200%;
   height: 200%;
   background-color: var(--primary);
-  top: 50%; /* Position verticale fixe (ici au milieu) */
+  top: 50%; 
   left: -50%;
   border-radius: 40%;
   animation: wave-constant 3s infinite linear;
 }
 
 @keyframes wave-constant {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
-
 /* RESPONSIVE */
 @media (max-width: 768px) {
   #sidebar {
