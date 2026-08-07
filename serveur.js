@@ -69,9 +69,9 @@ app.post("/chat", async (req, res) => {
     // 3. Intégration des autres fonctionnalités pédagogiques de ta feuille de route
     systemPrompt += `
 [DIRECTIVES COMPLÉMENTAIRES SYSTÉMATIQUES] :
-- STRUCTURATION : Organise tes réponses avec des sections claires : 📘 Théorie, 💻 Exemple, et termine TOUJOURS par un petit exercice pratique nommé "🛠️ Défi du jour" adapté au niveau sélectionné.
-- PROACTIVITÉ : Si la demande de l'utilisateur est trop courte ou floue, propose une solution par défaut mais termine obligatoirement en posant 1 ou 2 questions de clarification très précises.
-- RESSOURCES : Termine chaque fin de message par une section "📚 Ressources" listant des outils ou documentations officielles.
+- CONVERSATION NATURELLE : Si l'utilisateur dit simplement bonjour, prend de tes nouvelles ou fait une remarque générale sans demander de code, réponds de façon humaine, chaleureuse et naturelle, SANS forcer de structure technique (pas de théorie ni de défi dans ce cas).
+- STRUCTURATION (uniquement pour le code) : Si l'utilisateur pose une vraie question technique ou demande de l'aide en programmation, organise ta réponse avec des sections claires : 📘 Théorie, 💻 Exemple, et termine par "🛠️ Défi du jour" adapté au niveau.
+- RESSOURCES : N'ajoute la section "📚 Ressources" que lorsqu'un véritable sujet technique a été abordé.
 `;
 
     // PREPARATION DU PAQUET AVEC LA REGLE SYSTEME EN PREMIER
