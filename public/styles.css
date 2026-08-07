@@ -287,16 +287,14 @@ header h1 {
   color: var(--text);
   align-self: flex-start;
   border: 1px solid rgba(224, 122, 95, 0.15);
-  width: 100%;
-  max-width: 100%; /* Fixe la largeur au conteneur parent */
+  max-width: 85%; /* Au lieu de 100%, pour garder une jolie bulle comme l'utilisateur */
+  width: auto;
   box-sizing: border-box;
-  overflow: hidden; /* Contient les éléments enfants */
   border-bottom-left-radius: 5px !important;
 }
 
 .bot-message-content {
   width: 100%;
-  max-width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
 }
