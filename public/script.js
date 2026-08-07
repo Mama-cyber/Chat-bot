@@ -38,6 +38,28 @@ function resetTextareaHeight() {
   textarea.style.height = "42px";
 }
 
+// Détecte si l'utilisateur est "en bas" du chat (à un petit seuil près, en px).
+// Utilisé pour ne scroller automatiquement que si l'utilisateur n'a pas
+// remonté pour lire une réponse plus ancienne (façon ChatGPT / Gemini).
+function isUserNearBottom(container, threshold = 80) {
+  if (!container) return true;
+  return (
+    container.scrollHeight - container.scrollTop - container.clientHeight <
+    threshold
+  );
+}
+
+// Scroll intelligent : ne scrolle en bas QUE si l'utilisateur y était déjà.
+// Si l'utilisateur a remonté pour lire une réponse précédente, on ne le
+// dérange pas. Avec force=true on scrolle quoi qu'il arrive (utile quand
+// on vient d'ajouter une nouvelle bulle ou que la génération se termine).
+function scrollToBottom(container, force = false) {
+  if (!container) return;
+  if (force || isUserNearBottom(container)) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
 document.addEventListener("click", function (event) {
   if (window.innerWidth <= 768) {
     const sidebar = document.getElementById("sidebar");
@@ -179,7 +201,7 @@ function loadChat(id) {
       addUserActions(msgElement, rawText, index);
     }
   });
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  scrollToBottom(chatContainer, true);
 }
 
 function deleteChat(id) {
@@ -282,6 +304,112 @@ function copyText(button, textToCopy) {
     });
 }
 
+// Transforme tous les <pre><code> générés par marked en blocs Snapcode (header + dots)
+// pour éviter que les longs blocs de code débordent de la bulle du bot.
+//
+// Options :
+//   - applyHighlight=false : on ne colorie pas le code (utilisé pendant le
+//     streaming pour ne pas ralentir chaque token). On recoloriera à la fin.
+//   - applyHighlight=true  : on colorie via highlight.js (Atom One Dark),
+//     comme dans VSCode. À n'appeler qu'une fois la génération complète.
+function enhanceCodeBlocks(container, applyHighlight = false) {
+  if (!container) return;
+  // Sélecteur limité à la zone passée en argument pour ne pas toucher au reste du DOM
+  const pres = container.querySelectorAll("pre");
+  pres.forEach((pre) => {
+    // Si déjà transformé, on ne fait rien (idempotent)
+    if (pre.closest(".code-container")) {
+      // Si on a déjà wrapé mais qu'on nous demande la coloration maintenant
+      if (applyHighlight && window.hljs) {
+        const innerCode = pre.closest(".code-container").querySelector("code");
+        if (innerCode && !innerCode.dataset.highlighted) {
+          try {
+            window.hljs.highlightElement(innerCode);
+          } catch (e) {
+            console.warn("hljs échec sur un bloc déjà wrapé :", e);
+          }
+        }
+      }
+      return;
+    }
+
+    // On s'assure qu'aucun <pre> nu n'échappe à la limitation de largeur
+    pre.style.maxWidth = "100%";
+
+    // Récupération du <code> interne et de la langue
+    const codeEl = pre.querySelector("code") || pre;
+    let lang = "";
+    const className = codeEl.className || "";
+    const langMatch = className.match(/language-([\w-]+)/i);
+    if (langMatch) {
+      lang = langMatch[1];
+    } else if (pre.dataset && pre.dataset.language) {
+      lang = pre.dataset.language;
+    }
+
+    // Lecture du texte brut (résistante si le DOM a été mal fermé pendant le streaming)
+    const rawText = codeEl.textContent || codeEl.innerText || "";
+
+    // Création de la coquille Snapcode
+    const wrapper = document.createElement("div");
+    wrapper.className = "code-container";
+
+    const header = document.createElement("div");
+    header.className = "code-header";
+
+    const buttons = document.createElement("div");
+    buttons.className = "code-buttons";
+    buttons.innerHTML =
+      '<span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span>';
+
+    const langLabel = document.createElement("span");
+    langLabel.className = "code-lang";
+    langLabel.textContent = lang ? lang : "code";
+
+    // Bouton "copier le code" : invisible par défaut, visible au survol du bloc.
+    // Copie le texte BRUT (pas le HTML colorisé par highlight.js), comme VSCode.
+    const copyCodeBtn = document.createElement("button");
+    copyCodeBtn.type = "button";
+    copyCodeBtn.className = "code-copy-btn";
+    copyCodeBtn.title = "Copier le code";
+    copyCodeBtn.setAttribute("aria-label", "Copier le code");
+    copyCodeBtn.innerHTML = '<i class="fas fa-copy"></i>';
+    copyCodeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      copyText(copyCodeBtn, rawText);
+    });
+
+    header.appendChild(buttons);
+    header.appendChild(langLabel);
+    header.appendChild(copyCodeBtn);
+
+    // On reconstruit un <pre><code> propre à partir du texte brut
+    const newPre = document.createElement("pre");
+    const newCode = document.createElement("code");
+    if (lang) newCode.className = `language-${lang}`;
+    newCode.textContent = rawText;
+    newPre.appendChild(newCode);
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(newPre);
+
+    // Remplacement du <pre> d'origine par le bloc Snapcode
+    pre.replaceWith(wrapper);
+
+    // Coloration syntaxique à la demande (uniquement en fin de streaming
+    // pour ne pas pénaliser chaque token). highlight.js lit la classe
+    // "language-xxx" sur le <code> et dépose ses propres <span> à
+    // l'intérieur, ce qui colore le code façon VSCode.
+    if (applyHighlight && window.hljs) {
+      try {
+        window.hljs.highlightElement(newCode);
+      } catch (e) {
+        console.warn("hljs échec :", e);
+      }
+    }
+  });
+}
+
 function displayMessage(role, text, isHistoryLoad = false) {
   const chatContainer = document.getElementById("chat-container");
   const msgDiv = document.createElement("div");
@@ -296,12 +424,16 @@ function displayMessage(role, text, isHistoryLoad = false) {
     msgDiv.innerHTML = `
     <div class="message-text-content"><i class="fas fa-robot me-1"></i> <span class="render-zone"></span></div>
   `;
-    msgDiv.querySelector(".render-zone").innerHTML =
-      `<div class="bot-message-content">${marked.parse(text)}</div>`;
+    const content = msgDiv.querySelector(".render-zone");
+    content.innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
+    // Transforme les <pre> en blocs Snapcode (avec header, dots et overflow caché)
+    // + coloration syntaxique type VSCode via highlight.js
+    enhanceCodeBlocks(content.querySelector(".bot-message-content"), true);
   }
 
   chatContainer.appendChild(msgDiv);
-  if (!isHistoryLoad) chatContainer.scrollTop = chatContainer.scrollHeight;
+  // Nouveau message affiché → on force le scroll en bas pour le voir
+  if (!isHistoryLoad) scrollToBottom(chatContainer, true);
   return msgDiv;
 }
 
@@ -593,17 +725,70 @@ async function executePromptRegeneration(
   const botMessage = document.createElement("div");
   botMessage.className = "message bot-message";
 
-  // MODIFICATION ICI : Remplacement de l'icône FontAwesome par la div .wave-spinner
+  // Structure identique aux messages normaux dès le départ : on injecte
+  // directement .bot-message-content avec le spinner + texte de loading.
+  // Ça évite le saut visuel au premier token (la structure ne change plus
+  // jamais, seul le contenu interne du .bot-message-content est remplacé).
   botMessage.innerHTML = `
     <div class="message-text-content">
-      <i class="fas fa-robot me-1"></i><span class="render-zone"><div class="wave-spinner"></div> Axiom calcule la suite...</span>
+      <i class="fas fa-robot"></i>
+      <span class="render-zone">
+        <div class="bot-message-content bot-message-loading">
+          <div class="loading-line">
+            <div class="wave-spinner"></div>
+            <span class="loading-text">Axiom calcule la suite…</span>
+          </div>
+        </div>
+      </span>
     </div>
   `;
   chatContainer.appendChild(botMessage);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  // Nouvelle bulle bot qui apparaît → on force le scroll en bas
+  scrollToBottom(chatContainer, true);
 
   const renderZone = botMessage.querySelector(".render-zone");
+  const contentEl = renderZone.querySelector(".bot-message-content");
   let fullResponseText = "";
+
+  // Debounce du re-render pendant le streaming : on évite de tout reconstruire
+  // à chaque token (lissage visuel + protection contre les états intermédiaires
+  // de marked qui pourraient faire sortir un <pre> transitoire de la bulle).
+  // ⚠️ Pendant le streaming on ne colorie PAS (applyHighlight=false) : c'est trop
+  // coûteux de reparser tout le code via highlight.js à chaque token. La
+  // coloration est appliquée UNE SEULE fois dans flushRender() à la fin.
+  let renderTimer = null;
+  const scheduleRender = () => {
+    if (renderTimer) return;
+    renderTimer = setTimeout(() => {
+      renderTimer = null;
+      if (!contentEl) return;
+      // Retire la classe "loading" pour passer au layout normal du contenu
+      contentEl.classList.remove("bot-message-loading");
+      contentEl.innerHTML = marked.parse(fullResponseText);
+      // Re-wrap en Snapcode SANS colorier (le code sera coloré en flushRender)
+      enhanceCodeBlocks(contentEl, false);
+      // ⚡ Scroll intelligent : on ne suit la génération QUE si l'utilisateur
+      // était déjà en bas. Sinon on le laisse tranquille lire ce qu'il veut.
+      // requestAnimationFrame garantit que le DOM a reflow avant qu'on lise
+      // scrollHeight, sinon on capturait l'ancienne hauteur.
+      requestAnimationFrame(() => scrollToBottom(chatContainer, false));
+    }, 30);
+  };
+  // Flush immédiat : force un re-render sans attendre le debounce ET
+  // applique la coloration syntaxique (on n'est plus en plein streaming,
+  // le texte est complet → on peut payer le coût de highlight.js).
+  const flushRender = () => {
+    if (renderTimer) {
+      clearTimeout(renderTimer);
+      renderTimer = null;
+    }
+    if (!contentEl) return;
+    contentEl.classList.remove("bot-message-loading");
+    contentEl.innerHTML = marked.parse(fullResponseText);
+    enhanceCodeBlocks(contentEl, true); // ⚡ coloration VSCode ici
+    // Fin de stream : on force le scroll pour que l'utilisateur voie la fin
+    requestAnimationFrame(() => scrollToBottom(chatContainer, true));
+  };
 
   currentAbortController = new AbortController();
   const { signal } = currentAbortController;
@@ -643,6 +828,10 @@ async function executePromptRegeneration(
             const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
 
             if (parsed.error) {
+              if (renderTimer) {
+                clearTimeout(renderTimer);
+                renderTimer = null;
+              }
               renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ${parsed.error}</span>`;
               botMessage.className = "message error-message";
               finalizeGenerationState();
@@ -651,20 +840,38 @@ async function executePromptRegeneration(
 
             if (parsed.content) {
               fullResponseText += parsed.content;
-              renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-              chatContainer.scrollTop = chatContainer.scrollHeight;
+              // Le wrapper .bot-message-content existe déjà (créé à l'init
+              // de la bulle, avant le fetch), donc pas besoin de le (re)créer.
+              scheduleRender();
             }
           } catch (e) {}
         }
       }
     }
+    // Dernier rendu garanti à la fin du flux (pour ne rien perdre du debounce)
+    flushRender();
   } catch (error) {
     if (error.name === "AbortError") {
       console.log("Génération interrompue.");
       fullResponseText += " *[Réponse interrompue]*";
-      renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+      if (renderTimer) {
+        clearTimeout(renderTimer);
+        renderTimer = null;
+      }
+      // contentEl est déjà défini (la bulle est créée avec le wrapper dès le départ)
+      if (contentEl) {
+        contentEl.classList.remove("bot-message-loading");
+        contentEl.innerHTML = marked.parse(fullResponseText);
+        enhanceCodeBlocks(contentEl, true); // ⚡ coloration (le flux est terminé)
+        // Génération stoppée : scroll forcé pour voir où ça s'est arrêté
+        requestAnimationFrame(() => scrollToBottom(chatContainer, true));
+      }
     } else {
       console.error("Erreur de flux :", error);
+      if (renderTimer) {
+        clearTimeout(renderTimer);
+        renderTimer = null;
+      }
       renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux.</span>`;
       botMessage.className = "message error-message";
     }
@@ -681,7 +888,9 @@ async function executePromptRegeneration(
       addBotActions(botMessage, fullResponseText, msgIndex);
     }
     finalizeGenerationState();
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Fin de génération : scroll forcé pour voir la fin de la réponse +
+    // les boutons d'actions qui viennent d'être ajoutés
+    requestAnimationFrame(() => scrollToBottom(chatContainer, true));
   }
 }
 

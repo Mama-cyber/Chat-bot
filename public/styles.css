@@ -387,15 +387,15 @@ header h1 {
   border-color: #ffffff;
 }
 
-/* ===== BLOCS DE CODE DESIGN SNAPCODE (Sécurisés contre le dépassement) ===== */
+/* ===== BLOCS DE CODE DESIGN SNAPCODE (palette chaude, DA corail/abricot) ===== */
 .code-container {
   position: relative;
-  background: #1e1e1e !important;
+  background: linear-gradient(180deg, #3a2418 0%, #2a1810 100%) !important;
   border-radius: 10px;
   margin: 1.2rem 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 30px rgba(94, 48, 35, 0.25);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(231, 111, 81, 0.3);
   width: 100%;
   max-width: 100%; /* Force le bloc à ne pas dépasser de .bot-message */
 }
@@ -403,36 +403,89 @@ header h1 {
 .code-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px; /* Espacement entre les dots, le label et le bouton copier */
   padding: 0.6rem 1rem;
-  background-color: #252526;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, rgba(200, 85, 61, 0.18) 0%, rgba(200, 85, 61, 0.08) 100%);
+  border-bottom: 1px solid rgba(231, 111, 81, 0.25);
 }
 
 .code-buttons {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 .code-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 .code-dot.red {
-  background-color: #ff5f56;
+  background-color: var(--primary); /* Corail brûlé */
 }
 .code-dot.yellow {
-  background-color: #ffbd2e;
+  background-color: var(--secondary); /* Abricot chaud */
 }
 .code-dot.green {
-  background-color: #27c93f;
+  background-color: var(--success); /* Safran doux */
 }
 
 .code-lang {
-  font-size: 0.75rem;
-  color: #858585;
+  font-size: 0.7rem;
+  color: var(--light); /* Pêche crème : clair sur fond brun foncé */
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  /* Petite "pill" arrondie pour bien séparer visuellement des dots */
+  background: rgba(231, 111, 81, 0.2);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(231, 111, 81, 0.3);
+  flex-shrink: 0;
+}
+
+/* Bouton "copier le code" dans le header Snapcode : invisible par défaut,
+   apparaît au survol du bloc de code (façon VSCode / GitHub). */
+.code-copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--light);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+  margin-left: auto; /* pousse le bouton à droite du label de langue */
+}
+
+.code-container:hover .code-copy-btn,
+.code-copy-btn:focus-visible {
+  opacity: 0.7;
+}
+
+.code-copy-btn:hover {
+  opacity: 1 !important;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.code-copy-btn:active {
+  transform: scale(0.95);
+}
+
+.code-copy-btn.copied {
+  opacity: 1 !important;
+  color: #27c93f; /* vert pour confirmer la copie, comme les autres actions */
+  background-color: transparent;
 }
 
 .code-container pre {
@@ -451,9 +504,68 @@ header h1 {
 .code-container code {
   font-family: "Consolas", monospace !important;
   font-size: 0.9rem !important;
-  color: #d4d4d4;
+  color: var(--light);
   white-space: pre-wrap !important;
   word-break: break-word !important;
+  background: transparent !important;
+}
+
+/* Coloration syntaxique highlight.js (Atom One Dark, type VSCode) :
+   quand highlight.js passe sur un <code>, il pose des <span class="hljs-xxx">
+   à l'intérieur. On annule notre couleur var(--light) pour laisser passer
+   les couleurs du thème. Les variables CSS de hljs sont préfixées --hljs-*. */
+.code-container code.hljs,
+.code-container code[data-highlighted] {
+  color: #abb2bf; /* couleur de base d'Atom One Dark */
+  background: transparent !important;
+}
+
+/* Variante de filet de sécurité (pre non rewrapé) colorisé par hljs */
+.bot-message-content pre code.hljs,
+.bot-message-content pre code[data-highlighted] {
+  color: #abb2bf;
+  background: transparent !important;
+}
+
+/* Filet de sécurité : si marked génère un <pre><code> qui n'a pas été
+   re-wrap en .code-container (état intermédiaire du streaming par ex.),
+   on force quand même la limitation de largeur pour éviter le débordement
+   horizontal hors de la bulle du bot. */
+.bot-message-content pre {
+  background: linear-gradient(180deg, #3a2418 0%, #2a1810 100%) !important;
+  border-radius: 10px;
+  margin: 1.2rem 0;
+  padding: 1.2rem 1rem !important;
+  color: var(--light);
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box;
+  border: 1px solid rgba(231, 111, 81, 0.3);
+}
+
+.bot-message-content pre code {
+  font-family: "Consolas", monospace !important;
+  font-size: 0.9rem !important;
+  color: var(--light);
+  background: transparent !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Code inline (entre simples backticks) : empêcher aussi le débordement */
+.bot-message-content code {
+  font-family: "Consolas", monospace !important;
+  font-size: 0.9rem !important;
+  background: rgba(30, 30, 30, 0.08);
+  color: var(--dark);
+  padding: 1px 6px;
+  border-radius: 4px;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
 }
 
 /* ===== BARRE DE SAISIE ===== */
@@ -572,18 +684,35 @@ header h1 {
 }
 
 /* ===== INDICATEUR DE CHARGEMENT : VAGUE CONSTANTE ===== */
+.bot-message-loading {
+  /* Pas de padding interne, on laisse la ligne flex gérer */
+  padding: 2px 0;
+}
+
+.loading-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px; /* évite que la bulle soit trop écrasée pendant le load */
+}
+
+.loading-text {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-style: italic;
+  opacity: 0.85;
+}
+
 .wave-spinner {
-  width: 24px;   
-  height: 24px;  
-  border: 2px solid var(--primary); 
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--primary);
   border-radius: 50%;
   position: relative;
   overflow: hidden;
   background-color: #fff;
   display: inline-block;
-  vertical-align: middle;
-  margin-right: 10px;
-  margin-left: 10px;
+  flex-shrink: 0;
 }
 
 .wave-spinner::after {
@@ -592,7 +721,7 @@ header h1 {
   width: 200%;
   height: 200%;
   background-color: var(--primary);
-  top: 50%; 
+  top: 50%;
   left: -50%;
   border-radius: 40%;
   animation: wave-constant 3s infinite linear;
