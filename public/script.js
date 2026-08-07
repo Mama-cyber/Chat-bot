@@ -344,8 +344,22 @@ function enhanceCodeBlocks(container, applyHighlight = false) {
     langLabel.className = "code-lang";
     langLabel.textContent = lang ? lang : "code";
 
+    // Bouton "copier le code" : invisible par défaut, visible au survol du bloc.
+    // Copie le texte BRUT (pas le HTML colorisé par highlight.js), comme VSCode.
+    const copyCodeBtn = document.createElement("button");
+    copyCodeBtn.type = "button";
+    copyCodeBtn.className = "code-copy-btn";
+    copyCodeBtn.title = "Copier le code";
+    copyCodeBtn.setAttribute("aria-label", "Copier le code");
+    copyCodeBtn.innerHTML = '<i class="fas fa-copy"></i>';
+    copyCodeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      copyText(copyCodeBtn, rawText);
+    });
+
     header.appendChild(buttons);
     header.appendChild(langLabel);
+    header.appendChild(copyCodeBtn);
 
     // On reconstruit un <pre><code> propre à partir du texte brut
     const newPre = document.createElement("pre");

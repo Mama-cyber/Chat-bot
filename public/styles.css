@@ -437,6 +437,50 @@ header h1 {
   letter-spacing: 0.5px;
 }
 
+/* Bouton "copier le code" dans le header Snapcode : invisible par défaut,
+   apparaît au survol du bloc de code (façon VSCode / GitHub). */
+.code-copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--light);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+  margin-left: auto; /* pousse le bouton à droite du label de langue */
+}
+
+.code-container:hover .code-copy-btn,
+.code-copy-btn:focus-visible {
+  opacity: 0.7;
+}
+
+.code-copy-btn:hover {
+  opacity: 1 !important;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.code-copy-btn:active {
+  transform: scale(0.95);
+}
+
+.code-copy-btn.copied {
+  opacity: 1 !important;
+  color: #27c93f; /* vert pour confirmer la copie, comme les autres actions */
+  background-color: transparent;
+}
+
 .code-container pre {
   margin: 0 !important;
   padding: 1.2rem 1rem !important;
