@@ -287,9 +287,10 @@ header h1 {
   color: var(--text);
   align-self: flex-start;
   border: 1px solid rgba(224, 122, 95, 0.15);
-  max-width: 85%; /* Au lieu de 100%, pour garder une jolie bulle comme l'utilisateur */
-  width: auto;
+  width: 100%;
+  max-width: 85%; /* Bloque la largeur globale de la bulle */
   box-sizing: border-box;
+  overflow: hidden; /* Empêche les enfants de dépasser visuellement */
   border-bottom-left-radius: 5px !important;
 }
 
