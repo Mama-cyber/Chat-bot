@@ -403,7 +403,7 @@ header h1 {
 .code-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px; /* Espacement entre les dots, le label et le bouton copier */
   padding: 0.6rem 1rem;
   background: linear-gradient(180deg, rgba(200, 85, 61, 0.18) 0%, rgba(200, 85, 61, 0.08) 100%);
   border-bottom: 1px solid rgba(231, 111, 81, 0.25);
@@ -412,6 +412,7 @@ header h1 {
 .code-buttons {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 .code-dot {
   width: 12px;
@@ -430,11 +431,17 @@ header h1 {
 }
 
 .code-lang {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--light); /* Pêche crème : clair sur fond brun foncé */
   text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  /* Petite "pill" arrondie pour bien séparer visuellement des dots */
+  background: rgba(231, 111, 81, 0.2);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(231, 111, 81, 0.3);
+  flex-shrink: 0;
 }
 
 /* Bouton "copier le code" dans le header Snapcode : invisible par défaut,
@@ -677,18 +684,35 @@ header h1 {
 }
 
 /* ===== INDICATEUR DE CHARGEMENT : VAGUE CONSTANTE ===== */
+.bot-message-loading {
+  /* Pas de padding interne, on laisse la ligne flex gérer */
+  padding: 2px 0;
+}
+
+.loading-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px; /* évite que la bulle soit trop écrasée pendant le load */
+}
+
+.loading-text {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-style: italic;
+  opacity: 0.85;
+}
+
 .wave-spinner {
-  width: 24px;   
-  height: 24px;  
-  border: 2px solid var(--primary); 
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--primary);
   border-radius: 50%;
   position: relative;
   overflow: hidden;
   background-color: #fff;
   display: inline-block;
-  vertical-align: middle;
-  margin-right: 10px;
-  margin-left: 10px;
+  flex-shrink: 0;
 }
 
 .wave-spinner::after {
@@ -697,7 +721,7 @@ header h1 {
   width: 200%;
   height: 200%;
   background-color: var(--primary);
-  top: 50%; 
+  top: 50%;
   left: -50%;
   border-radius: 40%;
   animation: wave-constant 3s infinite linear;

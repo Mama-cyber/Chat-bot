@@ -702,16 +702,28 @@ async function executePromptRegeneration(
   const botMessage = document.createElement("div");
   botMessage.className = "message bot-message";
 
-  // MODIFICATION ICI : Remplacement de l'icône FontAwesome par la div .wave-spinner
+  // Structure identique aux messages normaux dès le départ : on injecte
+  // directement .bot-message-content avec le spinner + texte de loading.
+  // Ça évite le saut visuel au premier token (la structure ne change plus
+  // jamais, seul le contenu interne du .bot-message-content est remplacé).
   botMessage.innerHTML = `
     <div class="message-text-content">
-      <i class="fas fa-robot me-1"></i><span class="render-zone"><div class="wave-spinner"></div> Axiom calcule la suite...</span>
+      <i class="fas fa-robot"></i>
+      <span class="render-zone">
+        <div class="bot-message-content bot-message-loading">
+          <div class="loading-line">
+            <div class="wave-spinner"></div>
+            <span class="loading-text">Axiom calcule la suite…</span>
+          </div>
+        </div>
+      </span>
     </div>
   `;
   chatContainer.appendChild(botMessage);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
   const renderZone = botMessage.querySelector(".render-zone");
+  const contentEl = renderZone.querySelector(".bot-message-content");
   let fullResponseText = "";
 
   // Debounce du re-render pendant le streaming : on évite de tout reconstruire
@@ -725,8 +737,9 @@ async function executePromptRegeneration(
     if (renderTimer) return;
     renderTimer = setTimeout(() => {
       renderTimer = null;
-      const contentEl = renderZone.querySelector(".bot-message-content");
       if (!contentEl) return;
+      // Retire la classe "loading" pour passer au layout normal du contenu
+      contentEl.classList.remove("bot-message-loading");
       contentEl.innerHTML = marked.parse(fullResponseText);
       // Re-wrap en Snapcode SANS colorier (le code sera coloré en flushRender)
       enhanceCodeBlocks(contentEl, false);
@@ -741,8 +754,8 @@ async function executePromptRegeneration(
       clearTimeout(renderTimer);
       renderTimer = null;
     }
-    const contentEl = renderZone.querySelector(".bot-message-content");
     if (!contentEl) return;
+    contentEl.classList.remove("bot-message-loading");
     contentEl.innerHTML = marked.parse(fullResponseText);
     enhanceCodeBlocks(contentEl, true); // ⚡ coloration VSCode ici
     chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -798,10 +811,8 @@ async function executePromptRegeneration(
 
             if (parsed.content) {
               fullResponseText += parsed.content;
-              // On (re)crée le wrapper .bot-message-content au tout premier token
-              if (!renderZone.querySelector(".bot-message-content")) {
-                renderZone.innerHTML = `<div class="bot-message-content"></div>`;
-              }
+              // Le wrapper .bot-message-content existe déjà (créé à l'init
+              // de la bulle, avant le fetch), donc pas besoin de le (re)créer.
               scheduleRender();
             }
           } catch (e) {}
@@ -818,16 +829,11 @@ async function executePromptRegeneration(
         clearTimeout(renderTimer);
         renderTimer = null;
       }
-      const contentEl = renderZone.querySelector(".bot-message-content");
+      // contentEl est déjà défini (la bulle est créée avec le wrapper dès le départ)
       if (contentEl) {
+        contentEl.classList.remove("bot-message-loading");
         contentEl.innerHTML = marked.parse(fullResponseText);
         enhanceCodeBlocks(contentEl, true); // ⚡ coloration (le flux est terminé)
-      } else {
-        renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-        enhanceCodeBlocks(
-          renderZone.querySelector(".bot-message-content"),
-          true,
-        );
       }
     } else {
       console.error("Erreur de flux :", error);
