@@ -38,6 +38,28 @@ function resetTextareaHeight() {
   textarea.style.height = "42px";
 }
 
+// Détecte si l'utilisateur est "en bas" du chat (à un petit seuil près, en px).
+// Utilisé pour ne scroller automatiquement que si l'utilisateur n'a pas
+// remonté pour lire une réponse plus ancienne (façon ChatGPT / Gemini).
+function isUserNearBottom(container, threshold = 80) {
+  if (!container) return true;
+  return (
+    container.scrollHeight - container.scrollTop - container.clientHeight <
+    threshold
+  );
+}
+
+// Scroll intelligent : ne scrolle en bas QUE si l'utilisateur y était déjà.
+// Si l'utilisateur a remonté pour lire une réponse précédente, on ne le
+// dérange pas. Avec force=true on scrolle quoi qu'il arrive (utile quand
+// on vient d'ajouter une nouvelle bulle ou que la génération se termine).
+function scrollToBottom(container, force = false) {
+  if (!container) return;
+  if (force || isUserNearBottom(container)) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
 document.addEventListener("click", function (event) {
   if (window.innerWidth <= 768) {
     const sidebar = document.getElementById("sidebar");
@@ -179,7 +201,7 @@ function loadChat(id) {
       addUserActions(msgElement, rawText, index);
     }
   });
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  scrollToBottom(chatContainer, true);
 }
 
 function deleteChat(id) {
@@ -410,7 +432,8 @@ function displayMessage(role, text, isHistoryLoad = false) {
   }
 
   chatContainer.appendChild(msgDiv);
-  if (!isHistoryLoad) chatContainer.scrollTop = chatContainer.scrollHeight;
+  // Nouveau message affiché → on force le scroll en bas pour le voir
+  if (!isHistoryLoad) scrollToBottom(chatContainer, true);
   return msgDiv;
 }
 
@@ -720,7 +743,8 @@ async function executePromptRegeneration(
     </div>
   `;
   chatContainer.appendChild(botMessage);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  // Nouvelle bulle bot qui apparaît → on force le scroll en bas
+  scrollToBottom(chatContainer, true);
 
   const renderZone = botMessage.querySelector(".render-zone");
   const contentEl = renderZone.querySelector(".bot-message-content");
@@ -743,7 +767,11 @@ async function executePromptRegeneration(
       contentEl.innerHTML = marked.parse(fullResponseText);
       // Re-wrap en Snapcode SANS colorier (le code sera coloré en flushRender)
       enhanceCodeBlocks(contentEl, false);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      // ⚡ Scroll intelligent : on ne suit la génération QUE si l'utilisateur
+      // était déjà en bas. Sinon on le laisse tranquille lire ce qu'il veut.
+      // requestAnimationFrame garantit que le DOM a reflow avant qu'on lise
+      // scrollHeight, sinon on capturait l'ancienne hauteur.
+      requestAnimationFrame(() => scrollToBottom(chatContainer, false));
     }, 30);
   };
   // Flush immédiat : force un re-render sans attendre le debounce ET
@@ -758,7 +786,8 @@ async function executePromptRegeneration(
     contentEl.classList.remove("bot-message-loading");
     contentEl.innerHTML = marked.parse(fullResponseText);
     enhanceCodeBlocks(contentEl, true); // ⚡ coloration VSCode ici
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Fin de stream : on force le scroll pour que l'utilisateur voie la fin
+    requestAnimationFrame(() => scrollToBottom(chatContainer, true));
   };
 
   currentAbortController = new AbortController();
@@ -834,6 +863,8 @@ async function executePromptRegeneration(
         contentEl.classList.remove("bot-message-loading");
         contentEl.innerHTML = marked.parse(fullResponseText);
         enhanceCodeBlocks(contentEl, true); // ⚡ coloration (le flux est terminé)
+        // Génération stoppée : scroll forcé pour voir où ça s'est arrêté
+        requestAnimationFrame(() => scrollToBottom(chatContainer, true));
       }
     } else {
       console.error("Erreur de flux :", error);
@@ -857,7 +888,9 @@ async function executePromptRegeneration(
       addBotActions(botMessage, fullResponseText, msgIndex);
     }
     finalizeGenerationState();
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Fin de génération : scroll forcé pour voir la fin de la réponse +
+    // les boutons d'actions qui viennent d'être ajoutés
+    requestAnimationFrame(() => scrollToBottom(chatContainer, true));
   }
 }
 
