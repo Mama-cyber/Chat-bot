@@ -88,7 +88,7 @@ body {
 
 #new-chat-btn:hover {
   transform: scale(1.03);
-  box-shadow: 0 6px 15px rgba(200, 85, 61, 0.35); /* Ombre conservée ici */
+  box-shadow: 0 6px 15px rgba(200, 85, 61, 0.35);
 }
 
 #history-list {
@@ -110,7 +110,6 @@ body {
   justify-content: space-between;
   gap: 10px;
   transition: all 0.2s ease;
-  /* changement */
   will-change: transform;
   backface-visibility: hidden;
 }
@@ -130,7 +129,6 @@ body {
   background-color: white;
   border-color: var(--primary);
   color: var(--dark);
-  /* changement */
   transform: scale(1.01);
 }
 
@@ -146,7 +144,6 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow: none !important;
-  /* Optimisation fluidité */
   will-change: transform;
   backface-visibility: hidden;
 }
@@ -160,7 +157,7 @@ body {
   opacity: 1 !important;
   background-color: transparent !important;
   transform: scale(1.03) !important;
-  box-shadow: none !important; /* Ombre supprimée */
+  box-shadow: none !important;
 }
 
 /* ===== ZONE DE DISCUSSION ===== */
@@ -232,20 +229,20 @@ header h1 {
   z-index: 30;
   transition: all 0.2s ease;
   box-shadow: none !important;
-  /* Optimisation fluidité */
   will-change: transform;
   backface-visibility: hidden;
 }
 
 #menu-toggle:hover {
   transform: translateY(-50%) scale(1.03) !important;
-  box-shadow: none !important; /* Ombre supprimée */
+  box-shadow: none !important;
   background-color: transparent !important;
 }
 
 #chat-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* Empêche la barre de défilement globale horizontale */
   padding: 1.5rem 1rem;
   max-width: 800px;
   width: 100%;
@@ -262,6 +259,7 @@ header h1 {
   font-size: 0.95rem;
   word-wrap: break-word;
   word-break: break-word;
+  overflow-wrap: break-word; /* Évite les débordements de mots longs */
   animation: fadeIn 0.3s ease;
   box-shadow: 0 2px 8px rgba(94, 48, 35, 0.05);
   position: relative;
@@ -290,6 +288,9 @@ header h1 {
   align-self: flex-start;
   border: 1px solid rgba(224, 122, 95, 0.15);
   width: 100%;
+  max-width: 100%; /* Fixe la largeur au conteneur parent */
+  box-sizing: border-box;
+  overflow: hidden; /* Contient les éléments enfants */
   border-bottom-left-radius: 5px !important;
 }
 
@@ -341,7 +342,6 @@ header h1 {
   justify-content: center;
   transition: all 0.2s ease;
   box-shadow: none !important;
-  /* Optimisation fluidité */
   will-change: transform;
   backface-visibility: hidden;
 }
@@ -351,7 +351,7 @@ header h1 {
   color: #ffffff !important;
   background-color: transparent !important;
   transform: scale(1.03) !important;
-  box-shadow: none !important; /* Ombre supprimée */
+  box-shadow: none !important;
 }
 
 .bot-actions .action-btn:hover,
@@ -360,7 +360,7 @@ header h1 {
   color: var(--primary) !important;
   background-color: transparent !important;
   transform: scale(1.03) !important;
-  box-shadow: none !important; /* Ombre supprimée */
+  box-shadow: none !important;
 }
 
 .action-btn.copied {
@@ -388,7 +388,7 @@ header h1 {
   border-color: #ffffff;
 }
 
-/* ===== BLOCS DE CODE DESIGN SNAPCODE ===== */
+/* ===== BLOCS DE CODE DESIGN SNAPCODE (Sécurisés contre le dépassement) ===== */
 .code-container {
   position: relative;
   background: #1e1e1e !important;
@@ -398,7 +398,7 @@ header h1 {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-width: 100%;
+  max-width: 100%; /* Bloque le dépassement hors de la bulle */
 }
 
 .code-header {
@@ -440,9 +440,11 @@ header h1 {
   margin: 0 !important;
   padding: 1.2rem 1rem !important;
   background: transparent !important;
+  width: 100%;
   max-width: 100%;
+  overflow-x: auto; /* Permet le scroll horizontal propre UNIQUEMENT dans le bloc de code si nécessaire */
   white-space: pre-wrap !important;
-  word-break: keep-all !important;
+  word-break: break-all !important; /* Force les longues chaînes à casser proprement */
   overflow-wrap: anywhere !important;
   tab-size: 4;
 }
@@ -452,6 +454,7 @@ header h1 {
   font-size: 0.9rem !important;
   color: #d4d4d4;
   white-space: pre-wrap !important;
+  word-break: break-all !important;
 }
 
 /* ===== BARRE DE SAISIE ===== */
@@ -571,9 +574,9 @@ header h1 {
 
 /* ===== INDICATEUR DE CHARGEMENT : VAGUE CONSTANTE ===== */
 .wave-spinner {
-  width: 24px;   /* Réduit de 40% */
-  height: 24px;  /* Réduit de 40% */
-  border: 2px solid var(--primary); /* Ajusté proportionnellement */
+  width: 24px;   
+  height: 24px;  
+  border: 2px solid var(--primary); 
   border-radius: 50%;
   position: relative;
   overflow: hidden;
@@ -584,7 +587,6 @@ header h1 {
   margin-left: 10px;
 }
 
-/* La vague est fixée au milieu */
 .wave-spinner::after {
   content: "";
   position: absolute;
@@ -601,6 +603,7 @@ header h1 {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   #sidebar {
