@@ -284,13 +284,32 @@ function copyText(button, textToCopy) {
 
 // Transforme tous les <pre><code> générés par marked en blocs Snapcode (header + dots)
 // pour éviter que les longs blocs de code débordent de la bulle du bot.
-function enhanceCodeBlocks(container) {
+//
+// Options :
+//   - applyHighlight=false : on ne colorie pas le code (utilisé pendant le
+//     streaming pour ne pas ralentir chaque token). On recoloriera à la fin.
+//   - applyHighlight=true  : on colorie via highlight.js (Atom One Dark),
+//     comme dans VSCode. À n'appeler qu'une fois la génération complète.
+function enhanceCodeBlocks(container, applyHighlight = false) {
   if (!container) return;
   // Sélecteur limité à la zone passée en argument pour ne pas toucher au reste du DOM
   const pres = container.querySelectorAll("pre");
   pres.forEach((pre) => {
     // Si déjà transformé, on ne fait rien (idempotent)
-    if (pre.closest(".code-container")) return;
+    if (pre.closest(".code-container")) {
+      // Si on a déjà wrapé mais qu'on nous demande la coloration maintenant
+      if (applyHighlight && window.hljs) {
+        const innerCode = pre.closest(".code-container").querySelector("code");
+        if (innerCode && !innerCode.dataset.highlighted) {
+          try {
+            window.hljs.highlightElement(innerCode);
+          } catch (e) {
+            console.warn("hljs échec sur un bloc déjà wrapé :", e);
+          }
+        }
+      }
+      return;
+    }
 
     // On s'assure qu'aucun <pre> nu n'échappe à la limitation de largeur
     pre.style.maxWidth = "100%";
@@ -340,6 +359,18 @@ function enhanceCodeBlocks(container) {
 
     // Remplacement du <pre> d'origine par le bloc Snapcode
     pre.replaceWith(wrapper);
+
+    // Coloration syntaxique à la demande (uniquement en fin de streaming
+    // pour ne pas pénaliser chaque token). highlight.js lit la classe
+    // "language-xxx" sur le <code> et dépose ses propres <span> à
+    // l'intérieur, ce qui colore le code façon VSCode.
+    if (applyHighlight && window.hljs) {
+      try {
+        window.hljs.highlightElement(newCode);
+      } catch (e) {
+        console.warn("hljs échec :", e);
+      }
+    }
   });
 }
 
@@ -360,7 +391,8 @@ function displayMessage(role, text, isHistoryLoad = false) {
     const content = msgDiv.querySelector(".render-zone");
     content.innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
     // Transforme les <pre> en blocs Snapcode (avec header, dots et overflow caché)
-    enhanceCodeBlocks(content.querySelector(".bot-message-content"));
+    // + coloration syntaxique type VSCode via highlight.js
+    enhanceCodeBlocks(content.querySelector(".bot-message-content"), true);
   }
 
   chatContainer.appendChild(msgDiv);
@@ -671,6 +703,9 @@ async function executePromptRegeneration(
   // Debounce du re-render pendant le streaming : on évite de tout reconstruire
   // à chaque token (lissage visuel + protection contre les états intermédiaires
   // de marked qui pourraient faire sortir un <pre> transitoire de la bulle).
+  // ⚠️ Pendant le streaming on ne colorie PAS (applyHighlight=false) : c'est trop
+  // coûteux de reparser tout le code via highlight.js à chaque token. La
+  // coloration est appliquée UNE SEULE fois dans flushRender() à la fin.
   let renderTimer = null;
   const scheduleRender = () => {
     if (renderTimer) return;
@@ -679,12 +714,14 @@ async function executePromptRegeneration(
       const contentEl = renderZone.querySelector(".bot-message-content");
       if (!contentEl) return;
       contentEl.innerHTML = marked.parse(fullResponseText);
-      // Re-wrap immédiatement les blocs de code en Snapcode après chaque re-render
-      enhanceCodeBlocks(contentEl);
+      // Re-wrap en Snapcode SANS colorier (le code sera coloré en flushRender)
+      enhanceCodeBlocks(contentEl, false);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }, 30);
   };
-  // Flush immédiat : force un re-render sans attendre le debounce (utile pour le 1er token)
+  // Flush immédiat : force un re-render sans attendre le debounce ET
+  // applique la coloration syntaxique (on n'est plus en plein streaming,
+  // le texte est complet → on peut payer le coût de highlight.js).
   const flushRender = () => {
     if (renderTimer) {
       clearTimeout(renderTimer);
@@ -693,7 +730,7 @@ async function executePromptRegeneration(
     const contentEl = renderZone.querySelector(".bot-message-content");
     if (!contentEl) return;
     contentEl.innerHTML = marked.parse(fullResponseText);
-    enhanceCodeBlocks(contentEl);
+    enhanceCodeBlocks(contentEl, true); // ⚡ coloration VSCode ici
     chatContainer.scrollTop = chatContainer.scrollHeight;
   };
 
@@ -770,9 +807,13 @@ async function executePromptRegeneration(
       const contentEl = renderZone.querySelector(".bot-message-content");
       if (contentEl) {
         contentEl.innerHTML = marked.parse(fullResponseText);
-        enhanceCodeBlocks(contentEl);
+        enhanceCodeBlocks(contentEl, true); // ⚡ coloration (le flux est terminé)
       } else {
         renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+        enhanceCodeBlocks(
+          renderZone.querySelector(".bot-message-content"),
+          true,
+        );
       }
     } else {
       console.error("Erreur de flux :", error);

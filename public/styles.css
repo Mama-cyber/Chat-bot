@@ -456,6 +456,24 @@ header h1 {
   color: var(--light);
   white-space: pre-wrap !important;
   word-break: break-word !important;
+  background: transparent !important;
+}
+
+/* Coloration syntaxique highlight.js (Atom One Dark, type VSCode) :
+   quand highlight.js passe sur un <code>, il pose des <span class="hljs-xxx">
+   à l'intérieur. On annule notre couleur var(--light) pour laisser passer
+   les couleurs du thème. Les variables CSS de hljs sont préfixées --hljs-*. */
+.code-container code.hljs,
+.code-container code[data-highlighted] {
+  color: #abb2bf; /* couleur de base d'Atom One Dark */
+  background: transparent !important;
+}
+
+/* Variante de filet de sécurité (pre non rewrapé) colorisé par hljs */
+.bot-message-content pre code.hljs,
+.bot-message-content pre code[data-highlighted] {
+  color: #abb2bf;
+  background: transparent !important;
 }
 
 /* Filet de sécurité : si marked génère un <pre><code> qui n'a pas été
