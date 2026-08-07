@@ -282,6 +282,67 @@ function copyText(button, textToCopy) {
     });
 }
 
+// Transforme tous les <pre><code> générés par marked en blocs Snapcode (header + dots)
+// pour éviter que les longs blocs de code débordent de la bulle du bot.
+function enhanceCodeBlocks(container) {
+  if (!container) return;
+  // Sélecteur limité à la zone passée en argument pour ne pas toucher au reste du DOM
+  const pres = container.querySelectorAll("pre");
+  pres.forEach((pre) => {
+    // Si déjà transformé, on ne fait rien (idempotent)
+    if (pre.closest(".code-container")) return;
+
+    // On s'assure qu'aucun <pre> nu n'échappe à la limitation de largeur
+    pre.style.maxWidth = "100%";
+
+    // Récupération du <code> interne et de la langue
+    const codeEl = pre.querySelector("code") || pre;
+    let lang = "";
+    const className = codeEl.className || "";
+    const langMatch = className.match(/language-([\w-]+)/i);
+    if (langMatch) {
+      lang = langMatch[1];
+    } else if (pre.dataset && pre.dataset.language) {
+      lang = pre.dataset.language;
+    }
+
+    // Lecture du texte brut (résistante si le DOM a été mal fermé pendant le streaming)
+    const rawText = codeEl.textContent || codeEl.innerText || "";
+
+    // Création de la coquille Snapcode
+    const wrapper = document.createElement("div");
+    wrapper.className = "code-container";
+
+    const header = document.createElement("div");
+    header.className = "code-header";
+
+    const buttons = document.createElement("div");
+    buttons.className = "code-buttons";
+    buttons.innerHTML =
+      '<span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span>';
+
+    const langLabel = document.createElement("span");
+    langLabel.className = "code-lang";
+    langLabel.textContent = lang ? lang : "code";
+
+    header.appendChild(buttons);
+    header.appendChild(langLabel);
+
+    // On reconstruit un <pre><code> propre à partir du texte brut
+    const newPre = document.createElement("pre");
+    const newCode = document.createElement("code");
+    if (lang) newCode.className = `language-${lang}`;
+    newCode.textContent = rawText;
+    newPre.appendChild(newCode);
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(newPre);
+
+    // Remplacement du <pre> d'origine par le bloc Snapcode
+    pre.replaceWith(wrapper);
+  });
+}
+
 function displayMessage(role, text, isHistoryLoad = false) {
   const chatContainer = document.getElementById("chat-container");
   const msgDiv = document.createElement("div");
@@ -296,8 +357,10 @@ function displayMessage(role, text, isHistoryLoad = false) {
     msgDiv.innerHTML = `
     <div class="message-text-content"><i class="fas fa-robot me-1"></i> <span class="render-zone"></span></div>
   `;
-    msgDiv.querySelector(".render-zone").innerHTML =
-      `<div class="bot-message-content">${marked.parse(text)}</div>`;
+    const content = msgDiv.querySelector(".render-zone");
+    content.innerHTML = `<div class="bot-message-content">${marked.parse(text)}</div>`;
+    // Transforme les <pre> en blocs Snapcode (avec header, dots et overflow caché)
+    enhanceCodeBlocks(content.querySelector(".bot-message-content"));
   }
 
   chatContainer.appendChild(msgDiv);
@@ -605,6 +668,35 @@ async function executePromptRegeneration(
   const renderZone = botMessage.querySelector(".render-zone");
   let fullResponseText = "";
 
+  // Debounce du re-render pendant le streaming : on évite de tout reconstruire
+  // à chaque token (lissage visuel + protection contre les états intermédiaires
+  // de marked qui pourraient faire sortir un <pre> transitoire de la bulle).
+  let renderTimer = null;
+  const scheduleRender = () => {
+    if (renderTimer) return;
+    renderTimer = setTimeout(() => {
+      renderTimer = null;
+      const contentEl = renderZone.querySelector(".bot-message-content");
+      if (!contentEl) return;
+      contentEl.innerHTML = marked.parse(fullResponseText);
+      // Re-wrap immédiatement les blocs de code en Snapcode après chaque re-render
+      enhanceCodeBlocks(contentEl);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }, 30);
+  };
+  // Flush immédiat : force un re-render sans attendre le debounce (utile pour le 1er token)
+  const flushRender = () => {
+    if (renderTimer) {
+      clearTimeout(renderTimer);
+      renderTimer = null;
+    }
+    const contentEl = renderZone.querySelector(".bot-message-content");
+    if (!contentEl) return;
+    contentEl.innerHTML = marked.parse(fullResponseText);
+    enhanceCodeBlocks(contentEl);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  };
+
   currentAbortController = new AbortController();
   const { signal } = currentAbortController;
 
@@ -643,6 +735,10 @@ async function executePromptRegeneration(
             const parsed = JSON.parse(cleanedLine.replace(/^data: /, ""));
 
             if (parsed.error) {
+              if (renderTimer) {
+                clearTimeout(renderTimer);
+                renderTimer = null;
+              }
               renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> ${parsed.error}</span>`;
               botMessage.className = "message error-message";
               finalizeGenerationState();
@@ -651,20 +747,39 @@ async function executePromptRegeneration(
 
             if (parsed.content) {
               fullResponseText += parsed.content;
-              renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
-              chatContainer.scrollTop = chatContainer.scrollHeight;
+              // On (re)crée le wrapper .bot-message-content au tout premier token
+              if (!renderZone.querySelector(".bot-message-content")) {
+                renderZone.innerHTML = `<div class="bot-message-content"></div>`;
+              }
+              scheduleRender();
             }
           } catch (e) {}
         }
       }
     }
+    // Dernier rendu garanti à la fin du flux (pour ne rien perdre du debounce)
+    flushRender();
   } catch (error) {
     if (error.name === "AbortError") {
       console.log("Génération interrompue.");
       fullResponseText += " *[Réponse interrompue]*";
-      renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+      if (renderTimer) {
+        clearTimeout(renderTimer);
+        renderTimer = null;
+      }
+      const contentEl = renderZone.querySelector(".bot-message-content");
+      if (contentEl) {
+        contentEl.innerHTML = marked.parse(fullResponseText);
+        enhanceCodeBlocks(contentEl);
+      } else {
+        renderZone.innerHTML = `<div class="bot-message-content">${marked.parse(fullResponseText)}</div>`;
+      }
     } else {
       console.error("Erreur de flux :", error);
+      if (renderTimer) {
+        clearTimeout(renderTimer);
+        renderTimer = null;
+      }
       renderZone.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-wifi"></i> Erreur de flux.</span>`;
       botMessage.className = "message error-message";
     }

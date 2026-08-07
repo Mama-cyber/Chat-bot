@@ -456,6 +456,46 @@ header h1 {
   word-break: break-word !important;
 }
 
+/* Filet de sécurité : si marked génère un <pre><code> qui n'a pas été
+   re-wrap en .code-container (état intermédiaire du streaming par ex.),
+   on force quand même la limitation de largeur pour éviter le débordement
+   horizontal hors de la bulle du bot. */
+.bot-message-content pre {
+  background: #1e1e1e !important;
+  border-radius: 10px;
+  margin: 1.2rem 0;
+  padding: 1.2rem 1rem !important;
+  color: #d4d4d4;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box;
+}
+
+.bot-message-content pre code {
+  font-family: "Consolas", monospace !important;
+  font-size: 0.9rem !important;
+  color: #d4d4d4;
+  background: transparent !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Code inline (entre simples backticks) : empêcher aussi le débordement */
+.bot-message-content code {
+  font-family: "Consolas", monospace !important;
+  font-size: 0.9rem !important;
+  background: rgba(30, 30, 30, 0.08);
+  color: var(--dark);
+  padding: 1px 6px;
+  border-radius: 4px;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
 /* ===== BARRE DE SAISIE ===== */
 #input-area {
   background-color: white;
