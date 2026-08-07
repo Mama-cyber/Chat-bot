@@ -387,15 +387,15 @@ header h1 {
   border-color: #ffffff;
 }
 
-/* ===== BLOCS DE CODE DESIGN SNAPCODE (Sécurisés contre le dépassement) ===== */
+/* ===== BLOCS DE CODE DESIGN SNAPCODE (palette chaude, DA corail/abricot) ===== */
 .code-container {
   position: relative;
-  background: #1e1e1e !important;
+  background: linear-gradient(180deg, #3a2418 0%, #2a1810 100%) !important;
   border-radius: 10px;
   margin: 1.2rem 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 30px rgba(94, 48, 35, 0.25);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(231, 111, 81, 0.3);
   width: 100%;
   max-width: 100%; /* Force le bloc à ne pas dépasser de .bot-message */
 }
@@ -405,8 +405,8 @@ header h1 {
   align-items: center;
   justify-content: space-between;
   padding: 0.6rem 1rem;
-  background-color: #252526;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, rgba(200, 85, 61, 0.18) 0%, rgba(200, 85, 61, 0.08) 100%);
+  border-bottom: 1px solid rgba(231, 111, 81, 0.25);
 }
 
 .code-buttons {
@@ -417,22 +417,24 @@ header h1 {
   width: 12px;
   height: 12px;
   border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 .code-dot.red {
-  background-color: #ff5f56;
+  background-color: var(--primary); /* Corail brûlé */
 }
 .code-dot.yellow {
-  background-color: #ffbd2e;
+  background-color: var(--secondary); /* Abricot chaud */
 }
 .code-dot.green {
-  background-color: #27c93f;
+  background-color: var(--success); /* Safran doux */
 }
 
 .code-lang {
   font-size: 0.75rem;
-  color: #858585;
+  color: var(--light); /* Pêche crème : clair sur fond brun foncé */
   text-transform: uppercase;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .code-container pre {
@@ -451,7 +453,7 @@ header h1 {
 .code-container code {
   font-family: "Consolas", monospace !important;
   font-size: 0.9rem !important;
-  color: #d4d4d4;
+  color: var(--light);
   white-space: pre-wrap !important;
   word-break: break-word !important;
 }
@@ -461,23 +463,24 @@ header h1 {
    on force quand même la limitation de largeur pour éviter le débordement
    horizontal hors de la bulle du bot. */
 .bot-message-content pre {
-  background: #1e1e1e !important;
+  background: linear-gradient(180deg, #3a2418 0%, #2a1810 100%) !important;
   border-radius: 10px;
   margin: 1.2rem 0;
   padding: 1.2rem 1rem !important;
-  color: #d4d4d4;
+  color: var(--light);
   max-width: 100%;
   overflow-x: auto;
   white-space: pre-wrap !important;
   word-break: break-word !important;
   overflow-wrap: anywhere !important;
   box-sizing: border-box;
+  border: 1px solid rgba(231, 111, 81, 0.3);
 }
 
 .bot-message-content pre code {
   font-family: "Consolas", monospace !important;
   font-size: 0.9rem !important;
-  color: #d4d4d4;
+  color: var(--light);
   background: transparent !important;
   white-space: pre-wrap !important;
   word-break: break-word !important;
