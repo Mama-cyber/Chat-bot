@@ -243,13 +243,19 @@ header h1 {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden; /* Empêche la barre de défilement globale horizontale */
-  padding: 1.5rem 1rem;
+  /* padding-bottom plus large pour que la dernière bulle ne soit pas
+     collée au bord inférieur de la zone scrollable (sinon elle peut
+     paraître coupée par l'input-area quand on force le scroll en bas) */
+  padding: 1.5rem 1rem 2rem 1rem;
   max-width: 800px;
   width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  /* scroll-padding-bottom : quand on scrolle une ancre en bas, on laisse
+     de l'espace pour que la cible ne soit pas collée au bord */
+  scroll-padding-bottom: 1.5rem;
 }
 
 /* ===== BULLES DES MESSAGES ===== */
@@ -266,6 +272,18 @@ header h1 {
   background-color: #ffffff !important;
   border-radius: 20px;
   border-bottom-left-radius: 5px;
+  /* Flex-shrink: 0 empêche la bulle d'être écrasée si elle a un long
+     contenu (sinon le flex column du #chat-container peut la réduire) */
+  flex-shrink: 0;
+}
+
+/* Le .render-zone est un <span> dans le HTML, ce qui est INVALIDE quand
+   on y met du contenu block (div, pre, etc.). Le navigateur "répare" en
+   mode quirk et ça crée des bugs de hauteur / coupure. On force
+   display:block pour que le layout soit prévisible. */
+.render-zone {
+  display: block;
+  width: 100%;
 }
 
 .action-btn i,
@@ -290,7 +308,10 @@ header h1 {
   width: 100%;
   max-width: 85%; /* Bloque la largeur globale de la bulle */
   box-sizing: border-box;
-  overflow: hidden; /* Empêche les enfants de dépasser visuellement */
+  /* overflow:hidden uniquement sur X (empêche le débordement horizontal
+     des blocs de code). En Y on laisse visible pour ne pas couper un
+     long contenu pendant la génération. */
+  overflow-x: hidden;
   border-bottom-left-radius: 5px !important;
 }
 

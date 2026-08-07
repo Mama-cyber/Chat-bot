@@ -767,11 +767,12 @@ async function executePromptRegeneration(
       contentEl.innerHTML = marked.parse(fullResponseText);
       // Re-wrap en Snapcode SANS colorier (le code sera coloré en flushRender)
       enhanceCodeBlocks(contentEl, false);
-      // ⚡ Scroll intelligent : on ne suit la génération QUE si l'utilisateur
-      // était déjà en bas. Sinon on le laisse tranquille lire ce qu'il veut.
-      // requestAnimationFrame garantit que le DOM a reflow avant qu'on lise
-      // scrollHeight, sinon on capturait l'ancienne hauteur.
-      requestAnimationFrame(() => scrollToBottom(chatContainer, false));
+      // ⚡ On force le scroll en bas pendant la génération de la réponse
+      // que l'utilisateur vient de demander : il s'attend à la voir, peu
+      // importe où il était. requestAnimationFrame garantit que le DOM
+      // a reflow avant qu'on lise scrollHeight, sinon on capturait
+      // l'ancienne hauteur.
+      requestAnimationFrame(() => scrollToBottom(chatContainer, true));
     }, 30);
   };
   // Flush immédiat : force un re-render sans attendre le debounce ET
