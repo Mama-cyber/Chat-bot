@@ -397,7 +397,7 @@ header h1 {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-width: 100%; /* Bloque le dépassement hors de la bulle */
+  max-width: 100%; /* Force le bloc à ne pas dépasser de .bot-message */
 }
 
 .code-header {
@@ -441,9 +441,9 @@ header h1 {
   background: transparent !important;
   width: 100%;
   max-width: 100%;
-  overflow-x: auto; /* Permet le scroll horizontal propre UNIQUEMENT dans le bloc de code si nécessaire */
+  overflow-x: auto; /* Active un scroll horizontal propre si une ligne est trop longue */
   white-space: pre-wrap !important;
-  word-break: break-all !important; /* Force les longues chaînes à casser proprement */
+  word-break: break-word !important; /* CORRECTION : casse les mots au lieu de garder keep-all */
   overflow-wrap: anywhere !important;
   tab-size: 4;
 }
@@ -453,7 +453,7 @@ header h1 {
   font-size: 0.9rem !important;
   color: #d4d4d4;
   white-space: pre-wrap !important;
-  word-break: break-all !important;
+  word-break: break-word !important;
 }
 
 /* ===== BARRE DE SAISIE ===== */
